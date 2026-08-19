@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --color-ink: #0c0b0a;
+  --color-ink-2: #141210;
+  --color-surface: #1a1714;
+  --color-card: #211d19;
+  --color-line: #332e28;
+  --color-gold: #c9a962;
+  --color-gold-2: #e8d5a3;
+  --color-cream: #f3ebe0;
+  --color-muted: #8a8178;
+  --color-rose: #c47865;
+  --color-sage: #7d9b7f;
+  --color-amber: #d4a054;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background: #0c0b0a;
+  color: #f3ebe0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #c9a962;
+  color: #0c0b0a;
+}
+
+.font-display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.gold-ring {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 2px solid rgba(201, 169, 98, 0.2);
+  border-top-color: #c9a962;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.grain {
+  position: relative;
+}
+.grain::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.hairline {
+  background: linear-gradient(90deg, transparent, #c9a962, transparent);
+  height: 1px;
+}
+
+.card-glow {
+  box-shadow: 0 0 0 1px rgba(201, 169, 98, 0.12), 0 24px 60px -24px rgba(0,0,0,0.7);
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #7d9b7f;
+  box-shadow: 0 0 0 0 rgba(125, 155, 127, 0.7);
+  animation: pulse-live 1.6s ease-out infinite;
+}
+
+@keyframes pulse-live {
+  0% { box-shadow: 0 0 0 0 rgba(125, 155, 127, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(125, 155, 127, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(125, 155, 127, 0); }
+}
