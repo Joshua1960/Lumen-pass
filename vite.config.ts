@@ -23,5 +23,34 @@ export default defineConfig(async ({ mode }) => {
     plugins,
     envPrefix: ["VITE_", "NEXT_PUBLIC_"],
     define: processEnvDefines,
+    build: {
+      // Increase warning limit and provide manual chunking to avoid very large bundles
+      chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes("node_modules")) {
+              if (
+                id.includes("react") ||
+                id.includes("react-dom") ||
+                id.includes("react-router-dom")
+              ) {
+                return "vendor-react";
+              }
+              if (id.includes("@supabase")) {
+                return "vendor-supabase";
+              }
+              if (id.includes("framer-motion")) {
+                return "vendor-framer";
+              }
+              if (id.includes("html5-qrcode") || id.includes("qrcode")) {
+                return "vendor-qrcode";
+              }
+              return "vendor";
+            }
+          },
+        },
+      },
+    },
   };
 });
