@@ -2,7 +2,6 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
 export default defineConfig(async ({ mode }) => {
   const plugins = [react(), tailwindcss()];
   try {
@@ -24,7 +23,6 @@ export default defineConfig(async ({ mode }) => {
     envPrefix: ["VITE_", "NEXT_PUBLIC_"],
     define: processEnvDefines,
     build: {
-      // Increase warning limit and provide manual chunking to avoid very large bundles
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {
@@ -36,9 +34,6 @@ export default defineConfig(async ({ mode }) => {
                 id.includes("react-router-dom")
               ) {
                 return "vendor-react";
-              }
-              if (id.includes("@supabase")) {
-                return "vendor-supabase";
               }
               if (id.includes("framer-motion")) {
                 return "vendor-framer";
