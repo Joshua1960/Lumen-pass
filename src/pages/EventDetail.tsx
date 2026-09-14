@@ -30,6 +30,7 @@ import type {
   InviteStatus,
 } from "../lib/types";
 import { apiFetch } from "../lib/api";
+import { useLiveStream } from "../lib/useLiveStream";
 import {
   formatDate,
   formatTime,
@@ -83,6 +84,11 @@ export default function EventDetail() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
+  }, [load]);
+
+  // Real-time stream: door check-ins refresh counts + the list instantly.
+  useLiveStream(load);
+  useEffect(() => {
     const t = setInterval(load, 10000);
     return () => clearInterval(t);
   }, [load]);

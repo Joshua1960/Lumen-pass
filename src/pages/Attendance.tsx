@@ -6,6 +6,7 @@ import CapacityMeter from "../components/CapacityMeter";
 import ActivityFeed from "../components/ActivityFeed";
 import { InviteBadge } from "../components/StatusBadge";
 import { apiFetch } from "../lib/api";
+import { useLiveStream } from "../lib/useLiveStream";
 import type {
   AttendanceLog,
   EventRecord,
@@ -68,6 +69,11 @@ export default function Attendance() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
+  }, [load]);
+
+  // Real-time stream: scans land here the moment the door verifies them.
+  useLiveStream(load);
+  useEffect(() => {
     const t = setInterval(() => load(true), 6000);
     return () => clearInterval(t);
   }, [load]);

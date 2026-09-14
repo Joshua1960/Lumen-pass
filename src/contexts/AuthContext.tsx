@@ -1,23 +1,5 @@
 import { createContext } from "react";
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  user_metadata?: {
-    display_name?: string;
-    username?: string;
-    [key: string]: unknown;
-  };
-}
-
-export interface AuthSession {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  expires_at: number;
-  refresh_token: string;
-  user: AuthUser;
-}
+import type { AuthSession, AuthUser } from "../store/authStore";
 
 interface AuthValue {
   user: AuthUser | null;
@@ -30,3 +12,5 @@ export const AuthContext = createContext<AuthValue>({
   session: null,
   loading: true,
 });
+
+export type { AuthUser, AuthSession };

@@ -97,10 +97,14 @@ export default function Landing() {
             className="mt-10 flex flex-wrap gap-3"
           >
             <Link
-              to={user ? "/dashboard" : "/login"}
+              to={user ? (user.role === "attendee" ? "/my-invitations" : "/dashboard") : "/login"}
               className="px-7 py-3 rounded-full bg-gold text-ink text-sm tracking-wide hover:bg-gold-2 transition-colors"
             >
-              {user ? "Open the book" : "Begin an evening"}
+              {user
+                ? user.role === "attendee"
+                  ? "View my invitations"
+                  : "Open the book"
+                : "Begin an evening"}
             </Link>
             <a
               href="#how"

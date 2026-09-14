@@ -15,6 +15,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import CapacityMeter from "../components/CapacityMeter";
 import type { AttendanceLog, EventRecord, HostStats } from "../lib/types";
 import { apiFetch } from "../lib/api";
+import { useLiveStream } from "../lib/useLiveStream";
 import { exportAttendanceCsv, isUpcoming } from "../lib/format";
 
 const emptyStats: HostStats = {
@@ -46,9 +47,18 @@ export default function Dashboard() {
           "/api/attendance",
         ),
       ]);
-      setEvents(Array.isArray(eventRows) ? eventRows : []);
-      setLogs(Array.isArray(activity.logs) ? activity.logs : []);
-      setStats(activity.stats || emptyStats);
+      setEvents((prev) => {
+        const next = Array.isArray(eventRows) ? eventRows : [];
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
+      setLogs((prev) => {
+        const next = Array.isArray(activity.logs) ? activity.logs : [];
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
+      setStats((prev) => {
+        const next = activity.stats || emptyStats;
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
     } catch (err: unknown) {
       if (!silent)
         setError(
@@ -62,6 +72,12 @@ export default function Dashboard() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
+  }, [load]);
+
+  // Real-time stream: door scans mutate the book → dashboard refreshes
+  // instantly with no page reload (plus a light 8s safety net).
+  useLiveStream(load);
+  useEffect(() => {
     const t = setInterval(() => load(true), 8000);
     return () => clearInterval(t);
   }, [load]);

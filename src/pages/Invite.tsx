@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapPin, Clock, Shirt } from "lucide-react";
-import QRDisplay from "../components/QRDisplay";
+import TicketCard from "../components/TicketCard";
 import { InviteBadge } from "../components/StatusBadge";
 import VenueMap from "../components/VenueMap";
 import type { PublicInvite } from "../lib/types";
-import { formatDate, formatTime, inviteLink } from "../lib/format";
+import { apiFetch } from "../lib/api";
+import { formatDate, formatTime } from "../lib/format";
 
 export default function Invite() {
   const { token } = useParams();
@@ -17,11 +18,9 @@ export default function Invite() {
   const load = useCallback(async () => {
     try {
       setError("");
-      const res = await fetch(
+      const json = await apiFetch<PublicInvite>(
         `/api/invite?token=${encodeURIComponent(token || "")}`,
       );
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Invitation not found");
       setData(json);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invitation not found");
@@ -39,13 +38,10 @@ export default function Invite() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/invite", {
+      const json = await apiFetch<PublicInvite>("/api/invite", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, status }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Unable to RSVP");
       setData(json);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unable to RSVP");
@@ -199,21 +195,7 @@ export default function Invite() {
             </div>
           )}
 
-          {showQr && (
-            <div className="rounded-2xl bg-cream p-5 text-center">
-              <p className="text-[10px] uppercase tracking-[0.28em] text-ink/50 mb-3">
-                Present at the door
-              </p>
-              <div className="flex justify-center">
-                <QRDisplay value={inviteLink(invitation.qr_token)} size={210} />
-              </div>
-              {invitation.plus_ones > 0 && (
-                <p className="text-xs text-ink/60 mt-3">
-                  Plus {invitation.plus_ones} accompanying
-                </p>
-              )}
-            </div>
-          )}
+          {showQr && <TicketCard invitation={invitation} event={event} />}
         </div>
       </div>
     </div>
