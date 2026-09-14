@@ -654,7 +654,7 @@ export default function Scanner() {
               </div>
               <div
                 id="lumen-qr-reader"
-                className={`bg-black ${camOn ? "min-h-[280px]" : "h-0 overflow-hidden"}`}
+                className={`bg-black ${camOn ? "min-h-70" : "h-0 overflow-hidden"}`}
               />
               {!camOn && (
                 <div className="p-10 text-center">

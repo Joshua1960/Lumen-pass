@@ -225,7 +225,7 @@ export default function MyInvitations() {
                     alt=""
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent" />
                   <div className="absolute top-3 left-3">
                     <InviteBadge status={inv.status} />
                   </div>
