@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import { api } from "../lib/api";
-import { Plus, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface EventWithStats {
@@ -32,11 +32,16 @@ export default function Dashboard() {
 
   const load = async () => {
     setLoading(true);
+    setErr("");
     try {
       const list = await api.listEvents();
       setEvents(list);
-    } catch (e: any) {
-      setErr(e.message);
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : "Unable to load events. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -60,7 +65,7 @@ export default function Dashboard() {
               Hello, {profile?.display_name?.split(" ")[0] || "friend"}
             </h1>
             <p className="text-[#8a8178] mt-2">
-              Compose the room. Send invitations. Verify at the door.
+              Create the room. Send invitations. Verify at the door.
             </p>
           </div>
           <Link
@@ -77,8 +82,15 @@ export default function Dashboard() {
           </div>
         )}
         {err && (
-          <div className="text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-4 py-3 mb-6">
-            {err}
+          <div className="flex items-center justify-between gap-4 text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-4 py-3 mb-6">
+            <span>{err}</span>
+            <button
+              type="button"
+              onClick={load}
+              className="shrink-0 underline underline-offset-4"
+            >
+              Retry
+            </button>
           </div>
         )}
 
