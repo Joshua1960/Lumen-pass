@@ -1,6 +1,7 @@
 import supabase from './db-client.js';
 import { cors, requireUser, loadProfile } from './_auth.js';
 import { ticketToken } from './_qr.js';
+import { friendlyError } from './friendly-error.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -46,6 +47,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'scope=mine or event_id required' });
   } catch (err) {
     console.error('tickets error', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: friendlyError(err) });
   }
 }

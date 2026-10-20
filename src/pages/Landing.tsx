@@ -43,7 +43,7 @@ export default function Landing() {
               "radial-gradient(circle at 20% 30%, rgba(201,169,98,0.18), transparent 50%), radial-gradient(circle at 80% 70%, rgba(196,120,101,0.12), transparent 50%)",
           }}
         />
-        <div className="max-w-6xl mx-auto px-6 pt-20 pb-32 relative">
+        <div className=" mx-auto px-6 pt-20 pb-32 relative">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[#c9a962] border border-[#c9a962]/30 rounded-full px-4 py-1.5 mb-8">
               Private invitations, verified doors

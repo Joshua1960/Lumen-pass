@@ -1,5 +1,6 @@
 import supabase from './db-client.js';
 import { cors, requireProfile } from './_auth.js';
+import { friendlyError } from './friendly-error.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -33,6 +34,6 @@ export default async function handler(req, res) {
     return res.status(200).json(rows);
   } catch (err) {
     console.error('attendance error', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: friendlyError(err) });
   }
 }

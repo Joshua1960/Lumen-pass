@@ -1,5 +1,6 @@
 import supabase from './db-client.js';
 import { cors, requireUser } from './_auth.js';
+import { friendlyError } from './friendly-error.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -65,6 +66,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
     console.error('profile error', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: friendlyError(err) });
   }
 }

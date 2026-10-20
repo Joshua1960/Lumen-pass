@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { ShieldCheck, DoorOpen } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import type { Role } from "../lib/types";
 import myLogo from "../assets/gci-logo.png";
 
@@ -19,9 +19,14 @@ export default function Login() {
   const [displayName, setDisplayName] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [confirmation, setConfirmation] = useState<{
+    email: string;
+    required: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    if (!loading && user && profile) {
+    if (!loading && !creatingAccount && !confirmation && user && profile) {
       const from = (loc.state as any)?.from as string | undefined;
       if (from && from !== "/login") {
         nav(from, { replace: true });
@@ -31,12 +36,13 @@ export default function Login() {
         replace: true,
       });
     }
-  }, [loading, user, profile, nav, loc.state]);
+  }, [loading, creatingAccount, confirmation, user, profile, nav, loc.state]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
     setBusy(true);
+    if (mode === "signup") setCreatingAccount(true);
     try {
       if (mode === "signin") {
         await signIn(email.trim(), password);
@@ -44,11 +50,21 @@ export default function Login() {
         if (!displayName.trim()) throw new Error("Your name, please");
         if (password.length < 6)
           throw new Error("Password should be at least 6 characters");
-        await signUp(email.trim(), password, displayName.trim(), role);
+        const result = await signUp(
+          email.trim(),
+          password,
+          displayName.trim(),
+          role,
+        );
+        setConfirmation({
+          email: email.trim(),
+          required: result.emailConfirmationRequired,
+        });
       }
     } catch (e: any) {
       setErr(e.message || "Something went wrong");
     } finally {
+      setCreatingAccount(false);
       setBusy(false);
     }
   };
@@ -171,7 +187,7 @@ export default function Login() {
                     style={{ width: 18, height: 18 }}
                   />
                 ) : (
-                  <>{mode === "signin" ? "Enter" : "Create Account"} </>
+                  <>{mode === "signin" ? "Log in" : "Create Account"} </>
                 )}
               </button>
             </form>
@@ -189,6 +205,62 @@ export default function Login() {
           </div>
         </div>
       </div>
+      {confirmation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-5 py-8"
+          role="presentation"
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmation-title"
+            className="relative w-full max-w-md rounded-xl border border-[#332e28] bg-[#211d19] p-8 text-center card-glow"
+          >
+            <div className="corner-tl" />
+            <div className="corner-tr" />
+            <div className="corner-bl" />
+            <div className="corner-br" />
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#c9a962]/40 bg-[#c9a962]/10">
+              <MailCheck className="h-6 w-6 text-[#c9a962]" />
+            </div>
+            <h2
+              id="confirmation-title"
+              className="mb-3 font-display text-3xl text-cream"
+            >
+              {confirmation.required
+                ? "Check your email"
+                : "Your account is ready"}
+            </h2>
+            <p className="mb-2 text-sm leading-relaxed text-[#8a8178]">
+              {confirmation.required
+                ? "We sent a confirmation link to"
+                : "Email confirmation is not required for this account."}
+            </p>
+            {confirmation.required && (
+              <>
+                <p className="mb-2 break-all text-sm text-[#e8d5a3]">
+                  {confirmation.email}
+                </p>
+                <p className="mb-6 text-sm leading-relaxed text-[#8a8178]">
+                  Confirm your email, then return here to sign in.
+                </p>
+              </>
+            )}
+            {!confirmation.required && <div className="mb-6" />}
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmation(null);
+                setMode("signin");
+                setPassword("");
+              }}
+              className="btn-gold w-full rounded py-3 text-sm"
+            >
+              {confirmation.required ? "Back to sign in" : "Continue"}
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
