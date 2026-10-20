@@ -52,8 +52,8 @@ export default function EventForm() {
     ev.preventDefault();
     setErr("");
     if (!title.trim()) return setErr("A title, please");
-    if (!venue.trim()) return setErr("Where is the evening?");
-    if (!startsAt) return setErr("When does the evening begin?");
+    if (!venue.trim()) return setErr("Where is the event?");
+    if (!startsAt) return setErr("When does the event begin?");
     if (capacity < 1) return setErr("Capacity must be at least 1");
     setBusy(true);
     try {
@@ -124,7 +124,7 @@ export default function EventForm() {
           {editing ? "Refine" : "Compose"}
         </div>
         <h1 className="font-display text-5xl text-cream mb-8">
-          {editing ? "Refine the evening" : "A new evening"}
+          {editing ? "Refine the event" : "A new event"}
         </h1>
 
         <form
