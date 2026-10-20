@@ -1,13 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  Sparkles,
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  ArrowRight,
-  Send,
-  DoorOpen,
-} from "lucide-react";
+import { QrCode, ScanLine, ShieldCheck, Send, DoorOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import myLogo from "../assets/gci-logo.png";
 

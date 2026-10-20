@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Sparkles, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import myLogo from "../assets/gci-logo.png";
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -42,9 +43,7 @@ export default function Navbar() {
           }
           className="flex items-center gap-2 group"
         >
-          <span className="w-8 h-8 rounded-full border border-[#c9a962]/40 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-[#c9a962]" />
-          </span>
+          <img className="h-10 w-10" src={myLogo} alt="" />
           <span className="font-display text-2xl tracking-wide text-cream">
             Lumen
           </span>
