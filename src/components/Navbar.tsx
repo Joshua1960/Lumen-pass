@@ -102,13 +102,13 @@ export default function Navbar() {
 
       {open && (
         <div className="md:hidden border-t border-[#332e28]/60 bg-[#141210] px-6 py-4 space-y-3">
-          <Link
+          {/* <Link
             to="/events"
             onClick={() => setOpen(false)}
             className="block text-sm uppercase tracking-wide text-[#8a8178] hover:text-cream"
           >
             Browse events
-          </Link>
+          </Link> */}
           {links.map((l) => (
             <Link
               key={l.to}
