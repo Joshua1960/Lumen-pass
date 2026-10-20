@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import CapacityMeter from "../components/CapacityMeter";
@@ -36,10 +36,11 @@ export default function EventDetail() {
   const [bulk, setBulk] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -54,10 +55,10 @@ export default function EventDetail() {
     } finally {
       setLoading(false);
     }
-  };
-  useEffect(() => {
-    load();
   }, [id]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const stats = useMemo(() => {
     const total = invitations.length;
@@ -67,7 +68,8 @@ export default function EventDetail() {
       .reduce((sum, invitation) => sum + 1 + (invitation.plus_ones || 0), 0);
     const declined = invitations.filter((i) => i.status === "declined").length;
     const pending = invitations.filter((i) => i.status === "pending").length;
-    return { total, accepted, acceptedSeats, declined, pending };
+    const requested = invitations.filter((i) => i.status === "requested").length;
+    return { total, accepted, acceptedSeats, declined, pending, requested };
   }, [invitations]);
 
   const addOne = async () => {
@@ -182,6 +184,22 @@ export default function EventDetail() {
     }
   };
 
+  const reviewRequest = async (
+    inv: Invitation,
+    status: "accepted" | "declined",
+  ) => {
+    setReviewingId(String(inv.id));
+    setErr("");
+    try {
+      await api.reviewPublicInterest(inv.id, status);
+      await load();
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setReviewingId(null);
+    }
+  };
+
   if (loading)
     return (
       <div className="min-h-screen bg-[#0c0b0a] grain">
@@ -267,9 +285,10 @@ export default function EventDetail() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-6 mt-8">
-            <Stat label="Invited" value={stats.total} />
+          <div className="grid md:grid-cols-5 gap-6 mt-8">
+            <Stat label="Guest entries" value={stats.total} />
             <Stat label="Accepted" value={stats.accepted} accent="#7d9b7f" />
+            <Stat label="Requests" value={stats.requested} accent="#d4a054" />
             <Stat label="Pending" value={stats.pending} accent="#d4a054" />
             <Stat label="Declined" value={stats.declined} accent="#c47865" />
           </div>
@@ -342,28 +361,52 @@ export default function EventDetail() {
                     </div>
                   </div>
                   <StatusBadge status={inv.status} />
+                  {inv.status === "requested" ? (
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => reviewRequest(inv, "accepted")}
+                        disabled={reviewingId === String(inv.id)}
+                        title="Approve request and issue QR pass"
+                        className="p-2 text-[#7d9b7f] hover:text-cream disabled:opacity-50"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => reviewRequest(inv, "declined")}
+                        disabled={reviewingId === String(inv.id)}
+                        title="Decline request"
+                        className="p-2 text-[#c47865] hover:text-cream disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => emailInvite(inv)}
+                        title="Compose invitation email"
+                        className="p-2 text-[#8a8178] hover:text-[#c9a962]"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => copyLink(inv)}
+                        title="Copy invite link"
+                        className="p-2 text-[#8a8178] hover:text-[#c9a962]"
+                      >
+                        {copiedId === inv.id ? (
+                          <Check className="w-3.5 h-3.5 text-[#7d9b7f]" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </>
+                  )}
                   <button
-                    onClick={() => emailInvite(inv)}
-                    title="Compose invitation email"
-                    className="p-2 text-[#8a8178] hover:text-[#c9a962]"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => copyLink(inv)}
-                    title="Copy invite link"
-                    className="p-2 text-[#8a8178] hover:text-[#c9a962]"
-                  >
-                    {copiedId === inv.id ? (
-                      <Check className="w-3.5 h-3.5 text-[#7d9b7f]" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                  <button
+                    disabled={inv.status === "requested"}
                     onClick={() => removeInvite(inv)}
                     title="Rescind invitation"
-                    className="p-2 text-[#8a8178] hover:text-[#c47865]"
+                    className="p-2 text-[#8a8178] hover:text-[#c47865] disabled:opacity-30"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

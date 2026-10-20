@@ -1,6 +1,7 @@
 export default function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { color: string; bg: string; label: string }> = {
     pending: { color: '#d4a054', bg: 'rgba(212,160,84,0.1)', label: 'Pending' },
+    requested: { color: '#d4a054', bg: 'rgba(212,160,84,0.1)', label: 'Awaiting review' },
     accepted: { color: '#7d9b7f', bg: 'rgba(125,155,127,0.1)', label: 'Accepted' },
     declined: { color: '#c47865', bg: 'rgba(196,120,101,0.1)', label: 'Declined' },
     arrived: { color: '#7d9b7f', bg: 'rgba(125,155,127,0.15)', label: 'Arrived' },

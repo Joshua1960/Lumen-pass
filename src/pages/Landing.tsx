@@ -21,9 +21,14 @@ export default function Landing() {
             Lumen
           </span>
         </div>
-        <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
-          {user ? "Continue" : "Enter"}
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/events" className="text-sm text-[#c9a962] hover:text-cream">
+            Browse events
+          </Link>
+          <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
+            {user ? "Continue" : "Enter"}
+          </Link>
+        </div>
       </header>
 
       {/* Hero */}
@@ -46,16 +51,15 @@ export default function Landing() {
               <em className="italic font-normal">expected</em>
             </h1>
             <p className="text-lg text-[#8a8178] leading-relaxed max-w-xl mx-auto mb-10">
-              Lumen by GCI uses private QR passes for the invitations you send,
-              then verifies them at the door. No lists shouted across the hall.
-              No fumbling for names.
+              Discover upcoming events, request a place without creating an
+              account, and receive a private QR pass if the organiser approves.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                to={enterTo}
+                to="/events"
                 className="btn-gold px-8 py-3.5 rounded text-sm tracking-wide inline-flex items-center gap-2"
               >
-                Get Started
+                Browse events
               </Link>
               <a
                 href="#how"
@@ -81,12 +85,12 @@ export default function Landing() {
             {
               icon: Send,
               title: "Compose",
-              body: "Draft invitations by name. Each one carries a private link — no public sign-ups, no surprise walk-ins.",
+              body: "Publish events for public discovery or keep using private guest invitations.",
             },
             {
               icon: QrCode,
               title: "Confirm",
-              body: "Guests accept and receive a signed QR pass tied to their ticket, downloadable and offline-ready.",
+              body: "Review guest requests and issue a signed QR pass only when you approve them.",
             },
             {
               icon: ScanLine,
@@ -145,14 +149,14 @@ export default function Landing() {
               Arrive expected
             </h3>
             <p className="text-sm text-[#8a8178] leading-relaxed mb-8">
-              Accept invitations from your inbox. Keep passes in one quiet
-              place. Show your QR at the door and slip in.
+              Request to attend with your name and email. No account or email
+              verification is needed; keep your private pass link safe.
             </p>
             <Link
-              to="/login?as=attendee"
+              to="/events"
               className="btn-ghost px-6 py-3 rounded text-sm inline-flex items-center gap-2"
             >
-              Attend with Lumen
+              Browse events
             </Link>
           </div>
         </div>

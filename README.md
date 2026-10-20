@@ -1,6 +1,8 @@
 # Lumen Pass
 
-Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links; attendees accept invitations to receive QR passes; hosts verify passes at the door.
+Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links, and can review public attendance requests. Approved guests receive QR passes that hosts verify at the door.
+
+Upcoming events are publicly discoverable. Anyone can request to attend with a name and email address, without creating an account or verifying an email address. Hosts review these requests in the event guest list; approval checks event capacity and issues a unique QR pass. The applicant must keep the private pass link shown after submitting, because automatic email delivery is not configured.
 
 ## Local development
 
@@ -72,7 +74,7 @@ The first migration creates or reconciles the tables below, including foreign ke
 
 Use ID types and foreign keys consistently across these tables. Add a unique constraint on `tickets.invitation_id` so accepting the same invitation cannot issue multiple tickets. The service key bypasses row-level security; keep it server-side and retain the API's user and event-ownership checks. Review and enable appropriate RLS policies before exposing any direct browser database access.
 
-The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation.
+The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The public guest-pass migration allows account-free tickets and serializes host approval against event capacity. Apply all tracked migrations before using the guest flow.
 
 ## Deployment checklist
 

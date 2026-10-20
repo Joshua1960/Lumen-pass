@@ -33,7 +33,7 @@ export interface Invitation {
   guest_email: string;
   guest_phone?: string;
   plus_ones: number;
-  status: "pending" | "accepted" | "declined" | "sent" | "checked_in";
+  status: "pending" | "requested" | "accepted" | "declined" | "sent" | "checked_in";
   claimed_by?: string | null;
   claimed_at?: string | null;
   qr_token?: string;
@@ -104,7 +104,7 @@ export interface Ticket {
   id: string;
   invitation_id: string;
   event_id: string;
-  attendee_id: string;
+  attendee_id: string | null;
   qr_secret: string;
   checked_in_at: string | null;
   checked_in_by: string | null;

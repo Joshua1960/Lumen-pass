@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Sparkles, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import myLogo from "../assets/gci-logo.png";
 
@@ -50,6 +50,12 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
+          <Link
+            to="/events"
+            className={`text-sm tracking-wide uppercase transition-colors ${loc.pathname === "/events" ? "text-[#c9a962]" : "text-[#8a8178] hover:text-cream"}`}
+          >
+            Browse events
+          </Link>
           {links.map((l) => (
             <Link
               key={l.to}
@@ -96,6 +102,13 @@ export default function Navbar() {
 
       {open && (
         <div className="md:hidden border-t border-[#332e28]/60 bg-[#141210] px-6 py-4 space-y-3">
+          <Link
+            to="/events"
+            onClick={() => setOpen(false)}
+            className="block text-sm uppercase tracking-wide text-[#8a8178] hover:text-cream"
+          >
+            Browse events
+          </Link>
           {links.map((l) => (
             <Link
               key={l.to}

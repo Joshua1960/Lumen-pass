@@ -8,6 +8,11 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scanningRef = useRef(false);
   const lastScanRef = useRef<{ text: string; time: number } | null>(null);
+  const onScanRef = useRef(onScan);
+
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [cameraId, setCameraId] = useState<string>('');
@@ -64,7 +69,7 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
             const now = Date.now();
             if (lastScanRef.current && lastScanRef.current.text === decoded && now - lastScanRef.current.time < 2500) return;
             lastScanRef.current = { text: decoded, time: now };
-            onScan(decoded);
+            onScanRef.current(decoded);
           },
           () => { /* per-frame scan errors are noisy; ignore */ },
         );
@@ -129,8 +134,16 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
 
   return (
     <div className="w-full">
-      <div id="qr-reader" className="w-full mx-auto max-w-md rounded-lg overflow-hidden bg-black min-h-[280px] flex items-center justify-center">
-        {!ready && !error && <div className="gold-ring" />}
+      <div className="relative w-full mx-auto max-w-md">
+        <div
+          id="qr-reader"
+          className="w-full rounded-lg overflow-hidden bg-black min-h-[280px]"
+        />
+        {!ready && !error && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="gold-ring" />
+          </div>
+        )}
       </div>
 
       {error && (

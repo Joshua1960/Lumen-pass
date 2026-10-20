@@ -13,6 +13,9 @@ import MyInvitations from './pages/MyInvitations';
 import MyTickets from './pages/MyTickets';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import PublicEvents from './pages/PublicEvents';
+import PublicEvent from './pages/PublicEvent';
+import GuestPass from './pages/GuestPass';
 
 export default function App() {
   return (
@@ -20,6 +23,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/events" element={<PublicEvents />} />
+          <Route path="/events/:id/request" element={<PublicEvent />} />
+          <Route path="/guest-pass/:token" element={<GuestPass />} />
           <Route path="/login" element={<Login />} />
           <Route path="/invite/:token" element={<Invite />} />
 
