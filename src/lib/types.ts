@@ -22,6 +22,7 @@ export interface Event {
   capacity: number;
   dress_code: string | null;
   cover_url: string | null;
+  is_public: boolean;
   created_at: string;
 }
 
@@ -56,6 +57,7 @@ export interface EventRecord {
   capacity: number;
   dress_code: string | null;
   cover_url?: string | null;
+  is_public?: boolean;
   cover_image: string | null;
   status?: string;
   created_at: string;

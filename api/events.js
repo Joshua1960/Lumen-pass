@@ -60,6 +60,7 @@ export default async function handler(req, res) {
         capacity: Number(body.capacity) || 50,
         dress_code: body.dress_code || null,
         cover_url: body.cover_url || null,
+        is_public: body.is_public !== false,
       };
       const { data, error } = await supabase.from('events').insert(row).select().single();
       if (error) throw error;
@@ -71,7 +72,7 @@ export default async function handler(req, res) {
       const { id, ...rest } = req.body || {};
       if (!id) return res.status(400).json({ error: 'id required' });
       const patch = {};
-      for (const k of ['title','description','venue','address','starts_at','ends_at','capacity','dress_code','cover_url']) {
+      for (const k of ['title','description','venue','address','starts_at','ends_at','capacity','dress_code','cover_url','is_public']) {
         if (k in rest) patch[k] = rest[k];
       }
       const { data, error } = await supabase.from('events').update(patch).eq('id', id).eq('host_id', ctx.user.id).select().single();

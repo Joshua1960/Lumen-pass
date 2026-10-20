@@ -18,6 +18,7 @@ interface EventWithStats {
   capacity: number;
   dress_code: string | null;
   cover_url: string | null;
+  is_public: boolean;
   created_at: string;
   invitation_count: number;
   ticket_count: number;

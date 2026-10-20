@@ -2,12 +2,13 @@ import supabase from './db-client.js';
 import { cors } from './_auth.js';
 import { friendlyError } from './friendly-error.js';
 
-const publicFields = 'id, title, description, venue, address, starts_at, ends_at, capacity, dress_code, cover_url';
+const publicFields = 'id, title, description, venue, address, starts_at, ends_at, capacity, dress_code, cover_url, is_public';
 
 async function availableEvents(id) {
   let query = supabase
     .from('events')
     .select(publicFields)
+    .eq('is_public', true)
     .gte('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: true });
   if (id) query = query.eq('id', id);

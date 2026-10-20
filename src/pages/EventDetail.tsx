@@ -14,7 +14,6 @@ import {
   Send,
   Copy,
   Pencil,
-  Sparkles,
   Shirt,
   X,
   Check,
@@ -68,7 +67,9 @@ export default function EventDetail() {
       .reduce((sum, invitation) => sum + 1 + (invitation.plus_ones || 0), 0);
     const declined = invitations.filter((i) => i.status === "declined").length;
     const pending = invitations.filter((i) => i.status === "pending").length;
-    const requested = invitations.filter((i) => i.status === "requested").length;
+    const requested = invitations.filter(
+      (i) => i.status === "requested",
+    ).length;
     return { total, accepted, acceptedSeats, declined, pending, requested };
   }, [invitations]);
 
@@ -328,7 +329,6 @@ export default function EventDetail() {
 
             {invitations.length === 0 && !showInvite && (
               <div className="text-center py-14 text-sm text-[#8a8178]">
-                <Sparkles className="w-6 h-6 mx-auto text-[#c9a962]/40 mb-3" />
                 No invitations sent yet. Compose the list.
               </div>
             )}

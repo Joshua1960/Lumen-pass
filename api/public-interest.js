@@ -32,12 +32,15 @@ export default async function handler(req, res) {
 
       const { data: event, error: eventError } = await supabase
         .from('events')
-        .select('id, starts_at, capacity')
+        .select('id, starts_at, capacity, is_public')
         .eq('id', event_id)
         .gte('starts_at', new Date().toISOString())
         .maybeSingle();
       if (eventError) throw eventError;
       if (!event) return res.status(404).json({ error: 'Event not found or no longer available.' });
+      if (!event.is_public) {
+        return res.status(404).json({ error: 'This event is not accepting public requests.' });
+      }
 
       const { data: accepted, error: capacityError } = await supabase
         .from('invitations')
