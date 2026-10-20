@@ -23,7 +23,7 @@ interface AuthCtx {
     password: string,
     displayName: string,
     role: Role,
-  ) => Promise<void>;
+  ) => Promise<{ emailConfirmationRequired: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName: string,
     role: Role,
-  ) => {
+  ): Promise<{ emailConfirmationRequired: boolean }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -125,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ display_name: displayName, role, email }),
       });
     }
+    return { emailConfirmationRequired: !data.session };
   };
 
   const signOut = async () => {
