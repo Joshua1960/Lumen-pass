@@ -1,579 +1,528 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  MapPin,
-  Clock,
-  Shirt,
-  Users,
-  ScanLine,
-  ClipboardList,
-  Plus,
-  Trash2,
-  Copy,
-  Check,
-  Pencil,
-  Download,
-  Send,
-  UserCheck,
-  Undo2,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import CapacityMeter from "../components/CapacityMeter";
-import { EventBadge, InviteBadge } from "../components/StatusBadge";
-import QRDisplay from "../components/QRDisplay";
-import VenueMap from "../components/VenueMap";
-import InviteEngine from "../components/InviteEngine";
-import type {
-  AttendanceLog,
-  EventRecord,
-  Invitation,
-  InviteStatus,
-} from "../lib/types";
-import { apiFetch } from "../lib/api";
-import { useLiveStream } from "../lib/useLiveStream";
+import StatusBadge from "../components/StatusBadge";
+import { api } from "../lib/api";
+import { formatDate, formatTime, countdown } from "../lib/format";
 import {
-  formatDate,
-  formatTime,
-  inviteLink,
-  exportInvitationsCsv,
-  exportEventAnalyticsCsv,
-} from "../lib/format";
-
-const FILTERS: Array<InviteStatus | "all"> = [
-  "all",
-  "pending",
-  "sent",
-  "accepted",
-  "declined",
-  "checked_in",
-];
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  ScanLine,
+  ClipboardList,
+  Send,
+  Copy,
+  Pencil,
+  Sparkles,
+  Shirt,
+  X,
+  Check,
+  Mail,
+} from "lucide-react";
+import type { Invitation, Event } from "../lib/types";
 
 export default function EventDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [event, setEvent] = useState<EventRecord | null>(null);
-  const [invites, setInvites] = useState<Invitation[]>([]);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState<InviteStatus | "all">("all");
-  const [query, setQuery] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
-  const [copied, setCopied] = useState<number | null>(null);
-  const [dispatching, setDispatching] = useState(false);
-  const [preview, setPreview] = useState<Invitation | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [overrideId, setOverrideId] = useState<number | null>(null);
+  const [err, setErr] = useState("");
 
-  const load = useCallback(async () => {
+  const [showInvite, setShowInvite] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [plusOnes, setPlusOnes] = useState(0);
+  const [bulk, setBulk] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const load = async () => {
     if (!id) return;
+    setLoading(true);
     try {
-      setError("");
-      const [ev, list] = await Promise.all([
-        apiFetch<EventRecord>(`/api/events?id=${id}`),
-        apiFetch<Invitation[]>(`/api/invitations?event_id=${id}`),
+      const [ev, invs] = await Promise.all([
+        api.getEvent(id),
+        api.listInvitations(id),
       ]);
       setEvent(ev);
-      setInvites(Array.isArray(list) ? list : []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to load event");
+      setInvitations(invs);
+    } catch (e: any) {
+      setErr(e.message);
     } finally {
       setLoading(false);
     }
+  };
+  useEffect(() => {
+    load();
   }, [id]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+  const stats = useMemo(() => {
+    const total = invitations.length;
+    const accepted = invitations.filter((i) => i.status === "accepted").length;
+    const acceptedSeats = invitations
+      .filter((i) => i.status === "accepted")
+      .reduce((sum, invitation) => sum + 1 + (invitation.plus_ones || 0), 0);
+    const declined = invitations.filter((i) => i.status === "declined").length;
+    const pending = invitations.filter((i) => i.status === "pending").length;
+    return { total, accepted, acceptedSeats, declined, pending };
+  }, [invitations]);
 
-  // Real-time stream: door check-ins refresh counts + the list instantly.
-  useLiveStream(load);
-  useEffect(() => {
-    const t = setInterval(load, 10000);
-    return () => clearInterval(t);
-  }, [load]);
-
-  const visible = useMemo(() => {
-    return invites.filter((g) => {
-      const okStatus = filter === "all" || g.status === filter;
-      const q = query.trim().toLowerCase();
-      const okQ =
-        !q ||
-        g.guest_name.toLowerCase().includes(q) ||
-        (g.guest_email || "").toLowerCase().includes(q);
-      return okStatus && okQ;
-    });
-  }, [invites, filter, query]);
-
-  const updateStatus = async (inv: Invitation, status: InviteStatus) => {
+  const addOne = async () => {
+    if (!id) return;
+    if (!guestName.trim() || !guestEmail.trim()) return;
+    setCreating(true);
     try {
-      await apiFetch("/api/invitations", {
-        method: "PUT",
-        body: JSON.stringify({ id: inv.id, status }),
+      await api.createInvitation({
+        event_id: id,
+        guest_name: guestName.trim(),
+        guest_email: guestEmail.trim().toLowerCase(),
+        plus_ones: plusOnes,
       });
+      setGuestName("");
+      setGuestEmail("");
+      setPlusOnes(0);
       await load();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Update failed");
-    }
-  };
-
-  const override = async (inv: Invitation, action: "check_in" | "undo") => {
-    setOverrideId(inv.id);
-    setError("");
-    try {
-      await apiFetch("/api/attendance", {
-        method: "POST",
-        body: JSON.stringify({ invitation_id: inv.id, action }),
-      });
-      await load();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Override failed");
+    } catch (e: any) {
+      setErr(e.message);
     } finally {
-      setOverrideId(null);
+      setCreating(false);
     }
   };
 
-  const exportAnalytics = async () => {
-    if (!event) return;
+  const addBulk = async () => {
+    if (!id) return;
+    const lines = bulk
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (!lines.length) return;
+    setCreating(true);
     try {
-      const data = await apiFetch<{ logs: AttendanceLog[] }>(
-        `/api/attendance?event_id=${event.id}`,
-      );
-      exportEventAnalyticsCsv(event, invites, data.logs || []);
-    } catch {
-      exportInvitationsCsv(invites, event.title);
-    }
-  };
-
-  const removeGuest = async (inv: Invitation) => {
-    if (!confirm(`Remove ${inv.guest_name} from the list?`)) return;
-    try {
-      await apiFetch("/api/invitations", {
-        method: "DELETE",
-        body: JSON.stringify({ id: inv.id }),
-      });
+      for (const line of lines) {
+        // Format: "Name, email" or "Name <email>"
+        let name = "",
+          email = "";
+        if (line.includes(",")) {
+          [name, email] = line.split(",").map((s) => s.trim());
+        } else if (line.includes("<") && line.includes(">")) {
+          const m = line.match(/(.+)<(.+)>/);
+          if (m) {
+            name = m[1].trim();
+            email = m[2].trim();
+          }
+        } else if (line.includes(" ")) {
+          const parts = line.split(/\s+/);
+          email = parts.pop() || "";
+          name = parts.join(" ");
+        } else {
+          continue;
+        }
+        if (!name || !email) continue;
+        await api.createInvitation({
+          event_id: id,
+          guest_name: name,
+          guest_email: email.toLowerCase(),
+          plus_ones: 0,
+        });
+      }
+      setBulk("");
       await load();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Delete failed");
-    }
-  };
-
-  const resendPending = async () => {
-    const ids = invites.filter((g) => g.status === "pending").map((g) => g.id);
-    if (!ids.length) {
-      setError("No pending invitations to send.");
-      return;
-    }
-    setDispatching(true);
-    setError("");
-    try {
-      await apiFetch("/api/dispatch", {
-        method: "POST",
-        body: JSON.stringify({
-          event_id: Number(id),
-          invitation_ids: ids,
-          origin: window.location.origin,
-        }),
-      });
-      await load();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Unable to send invitations",
-      );
+    } catch (e: any) {
+      setErr(e.message);
     } finally {
-      setDispatching(false);
+      setCreating(false);
     }
   };
 
   const copyLink = async (inv: Invitation) => {
+    const url = `${window.location.origin}/invite/${inv.token}`;
     try {
-      await navigator.clipboard.writeText(inviteLink(inv.qr_token));
-      setCopied(inv.id);
-      if (inv.status === "pending") await updateStatus(inv, "sent");
-      setTimeout(() => setCopied(null), 1600);
+      await navigator.clipboard.writeText(url);
     } catch {
-      setError("Unable to copy link");
+      /* ignore */
     }
+    setCopiedId(String(inv.id));
+    setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const cancelEvent = async () => {
+  const emailInvite = (inv: Invitation) => {
     if (!event) return;
+    const url = `${window.location.origin}/invite/${inv.token}`;
+    const subject = `You're invited — ${event.title}`;
+    const body = [
+      `${inv.guest_name},`,
+      "",
+      `You're invited to ${event.title}.`,
+      "",
+      `When: ${formatDate(event.starts_at)} at ${formatTime(event.starts_at)}`,
+      `Where: ${event.venue}${event.address ? " · " + event.address : ""}`,
+      event.dress_code ? `Dress: ${event.dress_code}` : "",
+      inv.plus_ones > 0 ? `Plus ${inv.plus_ones}` : "",
+      "",
+      "Reply to this invitation and receive your Lumen pass:",
+      url,
+      "",
+      "Warmly,",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    window.location.href = `mailto:${encodeURIComponent(inv.guest_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const removeInvite = async (inv: Invitation) => {
+    if (!confirm(`Rescind invitation to ${inv.guest_name}?`)) return;
     try {
-      await apiFetch("/api/events", {
-        method: "PUT",
-        body: JSON.stringify({
-          id: event.id,
-          status: event.status === "cancelled" ? "published" : "cancelled",
-        }),
-      });
+      await api.deleteInvitation(inv.id);
       await load();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to update event");
+    } catch (e: any) {
+      setErr(e.message);
     }
   };
 
-  const deleteEvent = async () => {
-    if (!event) return;
-    try {
-      await apiFetch("/api/events", {
-        method: "DELETE",
-        body: JSON.stringify({ id: event.id }),
-      });
-      navigate("/dashboard");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to delete event");
-    }
-  };
-
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-ink">
+      <div className="min-h-screen bg-[#0c0b0a] grain">
         <Navbar />
-        <div className="flex justify-center py-24">
+        <div className="flex items-center justify-center py-24">
           <div className="gold-ring" />
         </div>
       </div>
     );
-  }
-
-  if (!event) {
+  if (!event)
     return (
-      <div className="min-h-screen bg-ink">
+      <div className="min-h-screen bg-[#0c0b0a] grain">
         <Navbar />
-        <p className="text-center text-rose py-20">
-          {error || "Event not found"}
-        </p>
+        <div className="text-center py-24 text-[#8a8178]">Event not found</div>
       </div>
     );
-  }
 
   return (
-    <div className="min-h-screen bg-ink">
+    <div className="min-h-screen bg-[#0c0b0a] grain">
       <Navbar />
-      <div className="relative h-64 sm:h-80 overflow-hidden">
-        <img
-          src={event.cover_image}
-          alt=""
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-ink/20" />
-        <div className="absolute bottom-0 left-0 right-0 max-w-6xl mx-auto px-5 pb-6">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <EventBadge status={event.status} />
-          </div>
-          <h1 className="font-display text-4xl sm:text-6xl leading-tight">
-            {event.title}
-          </h1>
-        </div>
-      </div>
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
+        >
+          <ArrowLeft className="w-3 h-3" /> All events
+        </Link>
 
-      <main className="max-w-6xl mx-auto px-5 py-8">
-        {error && <p className="text-sm text-rose mb-4">{error}</p>}
-
-        <div className="grid lg:grid-cols-3 gap-6 mb-10">
-          <div className="lg:col-span-2 rounded-2xl border border-line bg-card p-6">
-            <p className="text-cream/80 leading-relaxed mb-6">
-              {event.description}
-            </p>
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <p className="flex items-start gap-2 text-muted">
-                <MapPin size={16} className="text-gold mt-0.5" />
-                <span>
-                  <span className="text-cream block">{event.venue}</span>
-                  {event.address}
-                </span>
-              </p>
-              <p className="flex items-start gap-2 text-muted">
-                <Clock size={16} className="text-gold mt-0.5" />
-                <span>
-                  <span className="text-cream block">
-                    {formatDate(event.starts_at)}
-                  </span>
-                  {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
-                </span>
-              </p>
-              {event.dress_code && (
-                <p className="flex items-center gap-2 text-muted">
-                  <Shirt size={16} className="text-gold" />
-                  <span className="text-cream">{event.dress_code}</span>
+        {/* Header */}
+        <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-8 md:p-10 mb-8 overflow-hidden">
+          <div className="corner-tl" />
+          <div className="corner-tr" />
+          <div className="corner-bl" />
+          <div className="corner-br" />
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="flex-1 min-w-[280px]">
+              <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">
+                {countdown(event.starts_at)}
+              </div>
+              <h1 className="font-display text-5xl text-cream mb-4 leading-tight">
+                {event.title}
+              </h1>
+              {event.description && (
+                <p className="text-[#8a8178] max-w-xl mb-5 leading-relaxed">
+                  {event.description}
                 </p>
               )}
-              <p className="flex items-center gap-2 text-muted">
-                <Users size={16} className="text-gold" />
-                <span className="text-cream">
-                  {invites.length} invited ·{" "}
-                  {Math.max(0, event.capacity - invites.length)} seats open
-                </span>
-              </p>
-            </div>
-            <div className="mt-6">
-              <VenueMap
-                venue={event.venue}
-                address={event.address}
-                height={200}
-              />
-            </div>
-          </div>
-          <div className="rounded-2xl border border-line bg-card p-6 flex flex-col gap-5">
-            <CapacityMeter
-              current={event.checked_in_count || 0}
-              capacity={event.capacity}
-            />
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="rounded-xl bg-white/4 py-3">
-                <p className="font-display text-2xl text-gold-2">
-                  {event.accepted_count || 0}
-                </p>
-                <p className="text-[10px] uppercase tracking-widest text-muted">
-                  Accepted
-                </p>
-              </div>
-              <div className="rounded-xl bg-white/4 py-3">
-                <p className="font-display text-2xl text-rose">
-                  {event.declined_count || 0}
-                </p>
-                <p className="text-[10px] uppercase tracking-widest text-muted">
-                  Declined
-                </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#8a8178]">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />{" "}
+                  {formatDate(event.starts_at)} · {formatTime(event.starts_at)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5" /> {event.venue}
+                  {event.address ? ` · ${event.address}` : ""}
+                </div>
+                {event.dress_code && (
+                  <div className="flex items-center gap-2">
+                    <Shirt className="w-3.5 h-3.5" /> {event.dress_code}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <Link
                 to={`/events/${event.id}/scan`}
-                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-full bg-gold text-ink text-sm hover:bg-gold-2"
+                className="btn-gold px-5 py-2.5 rounded text-sm inline-flex items-center gap-2"
               >
-                <ScanLine size={16} /> Open door scanner
+                <ScanLine className="w-4 h-4" /> Scan at door
               </Link>
               <Link
                 to={`/events/${event.id}/attendance`}
-                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-full border border-line text-sm text-cream hover:border-gold/40"
+                className="btn-ghost px-5 py-2.5 rounded text-sm inline-flex items-center gap-2"
               >
-                <ClipboardList size={16} /> Attendance log
+                <ClipboardList className="w-4 h-4" /> Attendance
               </Link>
               <Link
                 to={`/events/${event.id}/edit`}
-                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-full border border-line text-sm text-muted hover:text-cream"
+                className="text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] flex items-center gap-2 px-5 py-2"
               >
-                <Pencil size={14} /> Edit evening
+                <Pencil className="w-3 h-3" /> Edit
               </Link>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="font-display text-3xl">The list</h2>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => exportInvitationsCsv(invites, event.title)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs text-muted hover:text-cream"
-            >
-              <Download size={13} /> Guest CSV
-            </button>
-            <button
-              onClick={exportAnalytics}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs text-muted hover:text-cream"
-            >
-              <Download size={13} /> Analytics CSV
-            </button>
-            <button
-              onClick={resendPending}
-              disabled={dispatching}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs text-muted hover:text-cream disabled:opacity-50"
-            >
-              <Send size={13} /> {dispatching ? "Sending…" : "Send pending"}
-            </button>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold text-ink text-xs"
-            >
-              <Plus size={13} /> Invite guests
-            </button>
+          <div className="grid md:grid-cols-4 gap-6 mt-8">
+            <Stat label="Invited" value={stats.total} />
+            <Stat label="Accepted" value={stats.accepted} accent="#7d9b7f" />
+            <Stat label="Pending" value={stats.pending} accent="#d4a054" />
+            <Stat label="Declined" value={stats.declined} accent="#c47865" />
+          </div>
+          <div className="mt-6">
+            <CapacityMeter
+              value={stats.acceptedSeats}
+              max={event.capacity}
+              label="Confirmed vs capacity"
+            />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search guests…"
-            className="flex-1 bg-card border border-line rounded-xl px-4 py-2 text-sm outline-none focus:border-gold/50"
-          />
-          <div className="flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => (
+        {err && (
+          <div className="text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-4 py-3 mb-6">
+            {err}
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-[1.4fr_1fr] gap-6">
+          {/* Guest list */}
+          <section className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962]">
+                  The list
+                </div>
+                <h2 className="font-display text-2xl text-cream">Guests</h2>
+              </div>
               <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider border ${
-                  filter === f
-                    ? "border-gold/50 text-gold-2 bg-gold/10"
-                    : "border-line text-muted"
-                }`}
+                onClick={() => setShowInvite(!showInvite)}
+                className="btn-gold px-4 py-2 rounded text-xs inline-flex items-center gap-2"
               >
-                {f.replace("_", " ")}
+                <Send className="w-3.5 h-3.5" />{" "}
+                {showInvite ? "Close" : "Invite"}
               </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line overflow-hidden">
-          <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-widest text-muted bg-card border-b border-line">
-            <div className="col-span-3">Guest</div>
-            <div className="col-span-3">Contact</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-1">+1</div>
-            <div className="col-span-3 text-right">Actions</div>
-          </div>
-          {visible.length === 0 && (
-            <p className="text-center text-muted text-sm py-12">
-              No guests match this view.
-            </p>
-          )}
-          {visible.map((g) => (
-            <div
-              key={g.id}
-              className="grid grid-cols-1 md:grid-cols-12 gap-2 px-4 py-3 border-t border-line/70 items-center"
-            >
-              <div className="md:col-span-3">
-                <p className="text-cream">{g.guest_name}</p>
-                {g.note && (
-                  <p className="text-xs text-muted truncate">{g.note}</p>
-                )}
-              </div>
-              <div className="md:col-span-3 text-sm text-muted">
-                <p>{g.guest_email || "—"}</p>
-                <p className="text-xs">{g.guest_phone}</p>
-              </div>
-              <div className="md:col-span-2">
-                <InviteBadge status={g.status} />
-              </div>
-              <div className="md:col-span-1 text-sm text-muted">
-                {g.plus_ones}
-              </div>
-              <div className="md:col-span-3 flex md:justify-end flex-wrap gap-1.5">
-                <button
-                  onClick={() => setPreview(g)}
-                  className="px-2 py-1 rounded-lg border border-line text-[11px] text-muted hover:text-cream"
-                >
-                  QR
-                </button>
-                <button
-                  onClick={() => copyLink(g)}
-                  className="px-2 py-1 rounded-lg border border-line text-[11px] text-muted hover:text-cream inline-flex items-center gap-1"
-                >
-                  {copied === g.id ? <Check size={11} /> : <Copy size={11} />}
-                  Link
-                </button>
-                {g.status !== "checked_in" && g.status !== "sent" && (
-                  <button
-                    onClick={() => updateStatus(g, "sent")}
-                    className="px-2 py-1 rounded-lg border border-line text-[11px] text-muted hover:text-cream inline-flex items-center gap-1"
-                  >
-                    <Send size={11} /> Sent
-                  </button>
-                )}
-                {g.status === "checked_in" ? (
-                  <button
-                    disabled={overrideId === g.id}
-                    onClick={() => override(g, "undo")}
-                    className="px-2 py-1 rounded-lg border border-line text-[11px] text-muted hover:text-cream inline-flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <Undo2 size={11} /> Undo
-                  </button>
-                ) : g.status !== "declined" ? (
-                  <button
-                    disabled={overrideId === g.id}
-                    onClick={() => override(g, "check_in")}
-                    className="px-2 py-1 rounded-lg border border-gold/30 bg-gold/10 text-[11px] text-gold-2 hover:bg-gold/20 inline-flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <UserCheck size={11} /> Admit
-                  </button>
-                ) : null}
-                <button
-                  onClick={() => removeGuest(g)}
-                  className="px-2 py-1 rounded-lg border border-line text-[11px] text-rose/80 hover:text-rose"
-                >
-                  <Trash2 size={11} />
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
 
-        <div className="mt-10 flex flex-wrap gap-3 text-sm">
-          <button onClick={cancelEvent} className="text-amber hover:underline">
-            {event.status === "cancelled"
-              ? "Restore evening"
-              : "Cancel evening"}
-          </button>
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="text-rose hover:underline"
-          >
-            Delete evening
-          </button>
+            {invitations.length === 0 && !showInvite && (
+              <div className="text-center py-14 text-sm text-[#8a8178]">
+                <Sparkles className="w-6 h-6 mx-auto text-[#c9a962]/40 mb-3" />
+                No invitations sent yet. Compose the list.
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {invitations.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center gap-3 p-3 rounded border border-[#332e28] hover:border-[#c9a962]/30 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#141210] border border-[#332e28] flex items-center justify-center text-[#c9a962] text-sm font-medium">
+                    {inv.guest_name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-cream truncate">
+                      {inv.guest_name}
+                      {inv.plus_ones > 0 && (
+                        <span className="text-[#c9a962] ml-2 text-xs">
+                          +{inv.plus_ones}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[#8a8178] truncate">
+                      {inv.guest_email}
+                    </div>
+                  </div>
+                  <StatusBadge status={inv.status} />
+                  <button
+                    onClick={() => emailInvite(inv)}
+                    title="Compose invitation email"
+                    className="p-2 text-[#8a8178] hover:text-[#c9a962]"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => copyLink(inv)}
+                    title="Copy invite link"
+                    className="p-2 text-[#8a8178] hover:text-[#c9a962]"
+                  >
+                    {copiedId === inv.id ? (
+                      <Check className="w-3.5 h-3.5 text-[#7d9b7f]" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => removeInvite(inv)}
+                    title="Rescind invitation"
+                    className="p-2 text-[#8a8178] hover:text-[#c47865]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Invite composer */}
+          {showInvite && (
+            <aside className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-6 animate-in">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962]">
+                    Compose
+                  </div>
+                  <h3 className="font-display text-xl text-cream">
+                    New invitation
+                  </h3>
+                </div>
+                <div className="flex text-[10px] uppercase tracking-wider border border-[#332e28] rounded overflow-hidden">
+                  <button
+                    onClick={() => setBulkMode(false)}
+                    className={`px-3 py-1 ${!bulkMode ? "bg-[#c9a962] text-[#0c0b0a]" : "text-[#8a8178]"}`}
+                  >
+                    One
+                  </button>
+                  <button
+                    onClick={() => setBulkMode(true)}
+                    className={`px-3 py-1 ${bulkMode ? "bg-[#c9a962] text-[#0c0b0a]" : "text-[#8a8178]"}`}
+                  >
+                    Bulk
+                  </button>
+                </div>
+              </div>
+
+              {!bulkMode ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] text-[#8a8178] mb-1.5">
+                      Name
+                    </label>
+                    <input
+                      className="field"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="e.g. Marlene Dietrich"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] text-[#8a8178] mb-1.5">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="field"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      placeholder="marlene@…"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] text-[#8a8178] mb-1.5">
+                      Plus ones
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={5}
+                      className="field"
+                      value={plusOnes}
+                      onChange={(e) => setPlusOnes(Number(e.target.value))}
+                    />
+                  </div>
+                  <button
+                    onClick={addOne}
+                    disabled={creating}
+                    className="btn-gold w-full py-2.5 rounded text-sm inline-flex items-center justify-center gap-2"
+                  >
+                    {creating ? (
+                      <div
+                        className="gold-ring"
+                        style={{ width: 16, height: 16 }}
+                      />
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        Send invitation
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-xs text-[#8a8178] leading-relaxed">
+                    One guest per line. Format:{" "}
+                    <code className="text-[#c9a962]">Name, email</code>
+                  </div>
+                  <textarea
+                    className="field min-h-[180px] font-mono text-xs"
+                    value={bulk}
+                    onChange={(e) => setBulk(e.target.value)}
+                    placeholder={
+                      "Ada Lovelace, ada@example.com\nAlan Turing, alan@example.com"
+                    }
+                  />
+                  <button
+                    onClick={addBulk}
+                    disabled={creating}
+                    className="btn-gold w-full py-2.5 rounded text-sm inline-flex items-center justify-center gap-2"
+                  >
+                    {creating ? (
+                      <div
+                        className="gold-ring"
+                        style={{ width: 16, height: 16 }}
+                      />
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        Send all
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              <div className="hairline my-5 opacity-30" />
+              <div className="text-xs text-[#8a8178] leading-relaxed">
+                Each invitation carries a private link. Copy it from the list to
+                share via your preferred channel.
+              </div>
+            </aside>
+          )}
         </div>
       </main>
+    </div>
+  );
+}
 
-      {showAdd && (
-        <InviteEngine
-          event={event}
-          invites={invites}
-          onClose={() => setShowAdd(false)}
-          onChanged={load}
-        />
-      )}
-
-      {preview && (
-        <div
-          className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setPreview(null)}
-        >
-          <div
-            className="bg-cream text-ink rounded-2xl p-6 max-w-xs w-full text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-[10px] uppercase tracking-[0.3em] text-ink/50 mb-1">
-              Door seal
-            </p>
-            <p className="font-display text-2xl mb-4">{preview.guest_name}</p>
-            <div className="flex justify-center mb-4">
-              <QRDisplay value={inviteLink(preview.qr_token)} size={200} />
-            </div>
-            <p className="text-xs text-ink/50 break-all">{preview.qr_token}</p>
-            <button
-              onClick={() => setPreview(null)}
-              className="mt-4 text-sm underline"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-line rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="font-display text-2xl mb-2">Delete this evening?</h3>
-            <p className="text-sm text-muted mb-6">
-              Guests, QR seals, and the attendance book will be erased.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={deleteEvent}
-                className="flex-1 py-2 rounded-full bg-rose text-ink text-sm"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-full border border-line text-sm"
-              >
-                Keep
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: string;
+}) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.25em] text-[#8a8178] mb-1">
+        {label}
+      </div>
+      <div
+        className="font-display text-4xl"
+        style={{ color: accent || "#f3ebe0" }}
+      >
+        {value}
+      </div>
     </div>
   );
 }

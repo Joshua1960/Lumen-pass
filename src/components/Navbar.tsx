@@ -1,196 +1,86 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-import { Menu, X, Crown, Ticket } from "lucide-react";
-import { useAuth } from "../contexts/useAuth";
-import { useAuthStore } from "../store/authStore";
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Sparkles, LogOut, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Navbar() {
-  const { user } = useAuth();
-  const signOut = useAuthStore((s) => s.signOut);
+  const { user, profile, signOut } = useAuth();
+  const nav = useNavigate();
+  const loc = useLocation();
   const [open, setOpen] = useState(false);
-  const isAttendee = user?.role === "attendee";
-  const home = user ? (isAttendee ? "/my-invitations" : "/dashboard") : "/";
 
-  const leave = () => {
-    signOut();
-    window.location.href = "/";
+  const hostLinks = [
+    { to: '/dashboard', label: 'Events' },
+    { to: '/admin', label: 'Admin' },
+  ];
+  const attendeeLinks = [
+    { to: '/my-invitations', label: 'Invitations' },
+    { to: '/my-tickets', label: 'Tickets' },
+  ];
+  const links = profile?.role === 'host' ? hostLinks : profile?.role === 'attendee' ? attendeeLinks : [];
+
+  const handleSignOut = async () => {
+    await signOut();
+    nav('/');
   };
 
-  const display =
-    user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
-
-  const linkCls = ({ isActive }: { isActive: boolean }) =>
-    `text-sm tracking-wide ${isActive ? "text-gold-2" : "text-cream/70 hover:text-cream"} transition-colors`;
-
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-ink/80 backdrop-blur-xl">
-      <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-        <Link to={home} className="flex items-center gap-2.5">
-          <img
-            src="/images/mark.png"
-            alt=""
-            className="w-8 h-8 object-contain"
-          />
-          <span className="font-display text-2xl tracking-[0.18em] text-cream">
-            LUMEN
+    <header className="sticky top-0 z-40 bg-[#0c0b0a]/85 backdrop-blur border-b border-[#332e28]/60">
+      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <Link to={user ? (profile?.role === 'host' ? '/dashboard' : '/my-tickets') : '/'} className="flex items-center gap-2 group">
+          <span className="w-8 h-8 rounded-full border border-[#c9a962]/40 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-[#c9a962]" />
           </span>
-          {user && (
-            <span
-              className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-[0.14em] border ${
-                isAttendee
-                  ? "border-sage/40 text-sage bg-sage/10"
-                  : "border-gold/40 text-gold-2 bg-gold/10"
-              }`}
-            >
-              {isAttendee ? <Ticket size={10} /> : <Crown size={10} />}
-              {isAttendee ? "Guest" : "Host"}
-            </span>
-          )}
+          <span className="font-display text-2xl tracking-wide text-cream">Lumen</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7">
-          {user ? (
-            isAttendee ? (
-              <>
-                <NavLink to="/my-invitations" className={linkCls}>
-                  Invitations
-                </NavLink>
-                <NavLink to="/my-tickets" className={linkCls}>
-                  Tickets
-                </NavLink>
-                <NavLink to="/profile" className={linkCls}>
-                  Profile
-                </NavLink>
-                <span className="text-xs text-muted hidden lg:inline max-w-[180px] truncate">
-                  {display}
-                </span>
-                <button
-                  onClick={leave}
-                  className="inline-flex items-center gap-1.5 text-sm text-cream/70 hover:text-gold-2 transition-colors"
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <NavLink to="/dashboard" className={linkCls}>
-                  Desk
-                </NavLink>
-                <NavLink to="/events/new" className={linkCls}>
-                  New event
-                </NavLink>
-                <span className="text-xs text-muted hidden lg:inline max-w-[180px] truncate">
-                  {user.email}
-                </span>
-                <button
-                  onClick={leave}
-                  className="inline-flex items-center gap-1.5 text-sm text-cream/70 hover:text-gold-2 transition-colors"
-                >
-                  Sign out
-                </button>
-              </>
-            )
-          ) : (
-            <>
-              <a
-                href="/#how"
-                className="text-sm text-cream/70 hover:text-cream"
-              >
-                How it works
-              </a>
-              <Link
-                to="/login"
-                className="px-4 py-1.5 rounded-full border border-gold/40 text-gold-2 text-sm hover:bg-gold/10 transition-colors"
-              >
-                Enter
-              </Link>
-            </>
+        <nav className="hidden md:flex items-center gap-8">
+          {links.map(l => (
+            <Link key={l.to} to={l.to} className={`text-sm tracking-wide uppercase transition-colors ${loc.pathname === l.to ? 'text-[#c9a962]' : 'text-[#8a8178] hover:text-cream'}`}>
+              {l.label}
+            </Link>
+          ))}
+          {user && (
+            <Link to="/profile" className={`text-sm tracking-wide uppercase transition-colors ${loc.pathname === '/profile' ? 'text-[#c9a962]' : 'text-[#8a8178] hover:text-cream'}`}>
+              Profile
+            </Link>
           )}
         </nav>
 
-        <button
-          className="md:hidden text-cream"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Menu"
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
+        <div className="hidden md:flex items-center gap-4">
+          {user ? (
+            <>
+              <span className="text-xs uppercase tracking-widest text-[#8a8178]">
+                {profile?.role === 'host' ? 'Host' : profile?.role === 'attendee' ? 'Guest' : ''}
+              </span>
+              <button onClick={handleSignOut} className="btn-ghost text-sm px-4 py-2 rounded flex items-center gap-2">
+                <LogOut className="w-3.5 h-3.5" /> Sign out
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn-gold text-sm px-5 py-2 rounded">Enter</Link>
+          )}
+        </div>
+
+        <button className="md:hidden p-2 text-cream" onClick={() => setOpen(!open)}>
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-line px-5 py-4 flex flex-col gap-3 bg-ink">
+        <div className="md:hidden border-t border-[#332e28]/60 bg-[#141210] px-6 py-4 space-y-3">
+          {links.map(l => (
+            <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className="block text-sm uppercase tracking-wide text-[#8a8178] hover:text-cream">
+              {l.label}
+            </Link>
+          ))}
+          {user && <Link to="/profile" onClick={() => setOpen(false)} className="block text-sm uppercase tracking-wide text-[#8a8178] hover:text-cream">Profile</Link>}
           {user ? (
-            isAttendee ? (
-              <>
-                <NavLink
-                  to="/my-invitations"
-                  onClick={() => setOpen(false)}
-                  className={linkCls}
-                >
-                  Invitations
-                </NavLink>
-                <NavLink
-                  to="/my-tickets"
-                  onClick={() => setOpen(false)}
-                  className={linkCls}
-                >
-                  Tickets
-                </NavLink>
-                <NavLink
-                  to="/profile"
-                  onClick={() => setOpen(false)}
-                  className={linkCls}
-                >
-                  Profile
-                </NavLink>
-                <button
-                  onClick={leave}
-                  className="text-left text-sm text-cream/70"
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <NavLink
-                  to="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className={linkCls}
-                >
-                  Desk
-                </NavLink>
-                <NavLink
-                  to="/events/new"
-                  onClick={() => setOpen(false)}
-                  className={linkCls}
-                >
-                  New event
-                </NavLink>
-                <button
-                  onClick={leave}
-                  className="text-left text-sm text-cream/70"
-                >
-                  Sign out
-                </button>
-              </>
-            )
+            <button onClick={() => { setOpen(false); handleSignOut(); }} className="btn-ghost text-sm px-4 py-2 rounded flex items-center gap-2">
+              <LogOut className="w-3.5 h-3.5" /> Sign out
+            </button>
           ) : (
-            <>
-              <a
-                href="/#how"
-                onClick={() => setOpen(false)}
-                className="text-sm text-cream/70"
-              >
-                How it works
-              </a>
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className="text-sm text-gold-2"
-              >
-                Enter
-              </Link>
-            </>
+            <Link to="/login" onClick={() => setOpen(false)} className="btn-gold text-sm px-5 py-2 rounded inline-block">Enter</Link>
           )}
         </div>
       )}

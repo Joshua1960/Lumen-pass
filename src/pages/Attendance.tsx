@@ -1,295 +1,226 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Download, UserCheck, Undo2 } from "lucide-react";
 import Navbar from "../components/Navbar";
-import CapacityMeter from "../components/CapacityMeter";
-import ActivityFeed from "../components/ActivityFeed";
-import { InviteBadge } from "../components/StatusBadge";
-import { apiFetch } from "../lib/api";
-import { useLiveStream } from "../lib/useLiveStream";
-import type {
-  AttendanceLog,
-  EventRecord,
-  HostStats,
-  Invitation,
-} from "../lib/types";
-import {
-  exportAttendanceCsv,
-  exportEventAnalyticsCsv,
-  formatTime,
-} from "../lib/format";
+import StatusBadge from "../components/StatusBadge";
+import { api } from "../lib/api";
+import { formatTime, formatDate } from "../lib/format";
+import { ArrowLeft, Download, Search, Users } from "lucide-react";
 
-const emptyStats: HostStats = {
-  guest_count: 0,
-  checked_in_count: 0,
-  accepted_count: 0,
-  declined_count: 0,
-  pending_count: 0,
-  sent_count: 0,
-  plus_ones: 0,
-};
+interface Row {
+  invitation_id: string;
+  guest_name: string;
+  guest_email: string;
+  plus_ones: number;
+  status: string;
+  ticket_id: string | null;
+  checked_in_at: string | null;
+}
 
 export default function Attendance() {
   const { id } = useParams();
-  const [event, setEvent] = useState<EventRecord | null>(null);
-  const [logs, setLogs] = useState<AttendanceLog[]>([]);
-  const [invites, setInvites] = useState<Invitation[]>([]);
-  const [stats, setStats] = useState<HostStats>(emptyStats);
+  const [event, setEvent] = useState<any>(null);
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"all" | AttendanceLog["result"]>("all");
-  const [busyId, setBusyId] = useState<number | null>(null);
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<
+    "all" | "arrived" | "awaiting" | "declined"
+  >("all");
 
-  const load = useCallback(
-    async (silent = false) => {
-      try {
-        if (!silent) setError("");
-        const data = await apiFetch<{
-          event: EventRecord;
-          logs: AttendanceLog[];
-          invitations: Invitation[];
-          stats: HostStats;
-        }>(`/api/attendance?event_id=${id}`);
-        setEvent(data.event);
-        setLogs(Array.isArray(data.logs) ? data.logs : []);
-        setInvites(Array.isArray(data.invitations) ? data.invitations : []);
-        setStats(data.stats || emptyStats);
-      } catch (err: unknown) {
-        if (!silent)
-          setError(
-            err instanceof Error ? err.message : "Unable to load attendance",
-          );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [id],
-  );
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
-
-  // Real-time stream: scans land here the moment the door verifies them.
-  useLiveStream(load);
-  useEffect(() => {
-    const t = setInterval(() => load(true), 6000);
-    return () => clearInterval(t);
-  }, [load]);
-
-  const visibleLogs = useMemo(
-    () => (filter === "all" ? logs : logs.filter((l) => l.result === filter)),
-    [logs, filter],
-  );
-
-  const waiting = invites
-    .filter((g) => g.status !== "checked_in" && g.status !== "declined")
-    .sort((a, b) => a.guest_name.localeCompare(b.guest_name));
-
-  const override = async (
-    invitation_id: number,
-    action: "check_in" | "undo",
-  ) => {
-    setBusyId(invitation_id);
-    setError("");
+  const load = async () => {
+    if (!id) return;
+    setLoading(true);
     try {
-      await apiFetch("/api/attendance", {
-        method: "POST",
-        body: JSON.stringify({ invitation_id, action }),
-      });
-      await load(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Override failed");
+      const [ev, r] = await Promise.all([api.getEvent(id), api.attendance(id)]);
+      setEvent(ev);
+      setRows(r);
     } finally {
-      setBusyId(null);
+      setLoading(false);
     }
   };
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+  }, [id]);
 
-  const rate = stats.guest_count
-    ? Math.round((stats.checked_in_count / stats.guest_count) * 100)
-    : 0;
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (
+          q &&
+          !(
+            r.guest_name.toLowerCase().includes(q.toLowerCase()) ||
+            r.guest_email.toLowerCase().includes(q.toLowerCase())
+          )
+        )
+          return false;
+        if (filter === "arrived") return Boolean(r.checked_in_at);
+        if (filter === "awaiting")
+          return !r.checked_in_at && r.status !== "declined";
+        if (filter === "declined") return r.status === "declined";
+        return true;
+      }),
+    [rows, q, filter],
+  );
+
+  const arrived = rows.filter((r) => r.checked_in_at).length;
+  const accepted = rows.filter((r) => r.status === "accepted").length;
+  const declined = rows.filter((r) => r.status === "declined").length;
+
+  const exportCSV = () => {
+    const header = [
+      "Guest",
+      "Email",
+      "Plus ones",
+      "Invitation status",
+      "Ticket",
+      "Checked in at",
+    ];
+    const lines = [header.join(",")];
+    for (const r of rows) {
+      lines.push(
+        [
+          JSON.stringify(r.guest_name),
+          JSON.stringify(r.guest_email),
+          String(r.plus_ones),
+          r.status,
+          r.ticket_id ? r.ticket_id.slice(0, 8) : "",
+          r.checked_in_at ? new Date(r.checked_in_at).toISOString() : "",
+        ].join(","),
+      );
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(event?.title || "attendance").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#0c0b0a] grain">
+        <Navbar />
+        <div className="flex items-center justify-center py-24">
+          <div className="gold-ring" />
+        </div>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-ink">
+    <div className="min-h-screen bg-[#0c0b0a] grain">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-5 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-10">
         <Link
           to={`/events/${id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-cream mb-6"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
         >
-          <ArrowLeft size={14} /> Back to evening
+          <ArrowLeft className="w-3 h-3" /> Event
         </Link>
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="live-dot" />
-              <p className="text-[11px] uppercase tracking-[0.3em] text-gold">
-                Live door
-              </p>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-2">
+              Attendance
             </div>
-            <h1 className="font-display text-4xl">
-              {event?.title || "Attendance"}
-            </h1>
+            <h1 className="font-display text-5xl text-cream">{event?.title}</h1>
+            <p className="text-[#8a8178] mt-1 text-sm">
+              {formatDate(event?.starts_at)}
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() =>
-                event && exportEventAnalyticsCsv(event, invites, logs)
-              }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs text-muted hover:text-cream"
-            >
-              <Download size={13} /> Analytics CSV
-            </button>
-            <button
-              onClick={() =>
-                exportAttendanceCsv(logs, event?.title || "attendance")
-              }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs text-muted hover:text-cream"
-            >
-              <Download size={13} /> Scans CSV
-            </button>
-            <button
-              onClick={() => load()}
-              className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-cream"
-            >
-              <RefreshCw size={13} /> Refresh
-            </button>
-          </div>
+          <button
+            onClick={exportCSV}
+            className="btn-ghost px-4 py-2.5 rounded text-sm inline-flex items-center gap-2"
+          >
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </button>
         </div>
 
-        {error && <p className="text-sm text-rose mb-4">{error}</p>}
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          <div className="rounded-2xl border border-line bg-card p-4">
-            <p className="font-display text-3xl text-gold-2">
-              {stats.checked_in_count}
-            </p>
-            <p className="text-[10px] uppercase tracking-widest text-muted mt-1">
-              Checked in
-            </p>
-          </div>
-          <div className="rounded-2xl border border-line bg-card p-4">
-            <p className="font-display text-3xl text-cream">
-              {stats.guest_count}
-            </p>
-            <p className="text-[10px] uppercase tracking-widest text-muted mt-1">
-              Registered
-            </p>
-          </div>
-          <div className="rounded-2xl border border-line bg-card p-4">
-            <p className="font-display text-3xl text-sage">{rate}%</p>
-            <p className="text-[10px] uppercase tracking-widest text-muted mt-1">
-              Door rate
-            </p>
-          </div>
-          <div className="rounded-2xl border border-line bg-card p-4">
-            <p className="font-display text-3xl text-amber">{waiting.length}</p>
-            <p className="text-[10px] uppercase tracking-widest text-muted mt-1">
-              Still expected
-            </p>
-          </div>
+        <div className="grid md:grid-cols-4 gap-3 mb-6">
+          {[
+            { k: "all", label: "All", value: rows.length, color: "#f3ebe0" },
+            {
+              k: "arrived",
+              label: "Arrived",
+              value: arrived,
+              color: "#7d9b7f",
+            },
+            {
+              k: "awaiting",
+              label: "Awaiting",
+              value: accepted - arrived,
+              color: "#d4a054",
+            },
+            {
+              k: "declined",
+              label: "Declined",
+              value: declined,
+              color: "#c47865",
+            },
+          ].map((s) => (
+            <button
+              key={s.k}
+              onClick={() => setFilter(s.k as any)}
+              className={`text-left p-4 rounded-lg border transition-colors ${filter === s.k ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/30"}`}
+            >
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#8a8178]">
+                {s.label}
+              </div>
+              <div className="font-display text-3xl" style={{ color: s.color }}>
+                {s.value}
+              </div>
+            </button>
+          ))}
         </div>
 
-        {event && (
-          <div className="mb-8">
-            <CapacityMeter
-              current={stats.checked_in_count}
-              capacity={event.capacity}
+        <div className="relative bg-[#211d19] border border-[#332e28] rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-[#332e28] flex items-center gap-2">
+            <Search className="w-4 h-4 text-[#8a8178]" />
+            <input
+              className="flex-1 bg-transparent outline-none text-sm placeholder:text-[#6b6259]"
+              placeholder="Search by name or email…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
             />
           </div>
-        )}
 
-        {loading && (
-          <div className="flex justify-center py-16">
-            <div className="gold-ring" />
-          </div>
-        )}
-
-        <div className="grid lg:grid-cols-5 gap-6">
-          <section className="lg:col-span-3 rounded-2xl border border-line bg-card p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-              <h2 className="font-display text-2xl">Scan book</h2>
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    "all",
-                    "success",
-                    "override",
-                    "duplicate",
-                    "invalid",
-                    "declined",
-                    "undo",
-                  ] as const
-                ).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider border ${
-                      filter === f
-                        ? "border-gold/50 text-gold-2 bg-gold/10"
-                        : "border-line text-muted"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-sm text-[#8a8178]">
+              <Users className="w-8 h-8 mx-auto text-[#c9a962]/30 mb-3" />
+              No matching guests.
+            </div>
+          ) : (
+            <div className="divide-y divide-[#332e28]">
+              <div className="grid grid-cols-[1fr_1fr_100px_120px_130px] px-5 py-3 text-[10px] uppercase tracking-[0.2em] text-[#8a8178]">
+                <div>Guest</div>
+                <div>Email</div>
+                <div>Plus</div>
+                <div>Status</div>
+                <div>Arrived</div>
               </div>
-            </div>
-            <ActivityFeed logs={visibleLogs} />
-          </section>
-
-          <section className="lg:col-span-2 rounded-2xl border border-line bg-card p-5">
-            <h2 className="font-display text-2xl mb-1">Manual override</h2>
-            <p className="text-xs text-muted mb-4">
-              Admit a guest without a scan, or reverse a mistaken check-in.
-            </p>
-            <div className="space-y-2 max-h-[520px] overflow-auto pr-1">
-              {invites
-                .slice()
-                .sort((a, b) => a.guest_name.localeCompare(b.guest_name))
-                .map((g) => (
-                  <div
-                    key={g.id}
-                    className="flex items-center gap-2 rounded-xl border border-line/80 px-3 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-cream truncate">
-                        {g.guest_name}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <InviteBadge status={g.status} />
-                        {g.checked_in_at && (
-                          <span className="text-[10px] text-muted">
-                            {formatTime(g.checked_in_at)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {g.status === "checked_in" ? (
-                      <button
-                        disabled={busyId === g.id}
-                        onClick={() => override(g.id, "undo")}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-line text-[11px] text-muted hover:text-cream disabled:opacity-50"
-                      >
-                        <Undo2 size={11} /> Undo
-                      </button>
-                    ) : g.status !== "declined" ? (
-                      <button
-                        disabled={busyId === g.id}
-                        onClick={() => override(g.id, "check_in")}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gold/15 border border-gold/30 text-[11px] text-gold-2 hover:bg-gold/25 disabled:opacity-50"
-                      >
-                        <UserCheck size={11} /> Admit
-                      </button>
-                    ) : null}
+              {filtered.map((r) => (
+                <div
+                  key={r.invitation_id}
+                  className="grid grid-cols-[1fr_1fr_100px_120px_130px] px-5 py-3 items-center text-sm hover:bg-[#141210]/50"
+                >
+                  <div className="text-cream truncate">{r.guest_name}</div>
+                  <div className="text-[#8a8178] truncate">{r.guest_email}</div>
+                  <div className="text-[#c9a962]">
+                    {r.plus_ones > 0 ? `+${r.plus_ones}` : ""}
                   </div>
-                ))}
-              {!invites.length && !loading && (
-                <p className="text-sm text-muted">No guests on this list.</p>
-              )}
+                  <div>
+                    <StatusBadge
+                      status={r.checked_in_at ? "arrived" : r.status}
+                    />
+                  </div>
+                  <div className="text-[#8a8178] text-xs">
+                    {r.checked_in_at ? formatTime(r.checked_in_at) : "—"}
+                  </div>
+                </div>
+              ))}
             </div>
-          </section>
+          )}
         </div>
       </main>
     </div>

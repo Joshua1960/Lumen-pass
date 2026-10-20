@@ -1,203 +1,132 @@
-import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { MapPin, Clock, Shirt } from "lucide-react";
-import TicketCard from "../components/TicketCard";
-import { InviteBadge } from "../components/StatusBadge";
-import VenueMap from "../components/VenueMap";
-import type { PublicInvite } from "../lib/types";
-import { apiFetch } from "../lib/api";
-import { formatDate, formatTime } from "../lib/format";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { api } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import { formatDate, formatTime } from '../lib/format';
+import { Sparkles, Calendar, MapPin, Shirt, Check, X, ArrowRight } from 'lucide-react';
 
 export default function Invite() {
   const { token } = useParams();
-  const [data, setData] = useState<PublicInvite | null>(null);
+  const nav = useNavigate();
+  const { user, profile, loading: authLoading } = useAuth();
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = async () => {
+    if (!token) return;
+    setLoading(true);
     try {
-      setError("");
-      const json = await apiFetch<PublicInvite>(
-        `/api/invite?token=${encodeURIComponent(token || "")}`,
-      );
-      setData(json);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Invitation not found");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+      const d = await api.lookupInvite(token);
+      setData(d);
+    } catch (e: any) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, [token]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
-
-  const rsvp = async (status: "accepted" | "declined") => {
+  const accept = async () => {
+    if (!token) return;
+    if (!user) { nav(`/login?as=attendee&next=/invite/${token}`); return; }
+    if (profile && profile.role !== 'attendee') { setErr('This account is a host account. Sign in as a guest to accept.'); return; }
     setBusy(true);
-    setError("");
     try {
-      const json = await apiFetch<PublicInvite>("/api/invite", {
-        method: "PUT",
-        body: JSON.stringify({ token, status }),
-      });
-      setData(json);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to RSVP");
-    } finally {
-      setBusy(false);
-    }
+      await api.acceptInvite(token);
+      nav('/my-tickets');
+    } catch (e: any) { setErr(e.message); setBusy(false); }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-ink flex items-center justify-center">
-        <div className="gold-ring" />
-      </div>
-    );
-  }
+  const decline = async () => {
+    if (!token || !user) { nav(`/login?as=attendee&next=/invite/${token}`); return; }
+    if (!confirm('Decline this invitation?')) return;
+    setBusy(true);
+    try { await api.declineInvite(token); await load(); }
+    catch (e: any) { setErr(e.message); }
+    finally { setBusy(false); }
+  };
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center">
-        <img
-          src="/images/mark.png"
-          alt=""
-          className="w-12 h-12 mb-4 opacity-80"
-        />
-        <p className="font-display text-3xl mb-2">This seal is unknown</p>
-        <p className="text-muted text-sm">{error}</p>
-      </div>
-    );
-  }
+  if (loading || authLoading) return <div className="min-h-screen flex items-center justify-center bg-[#0c0b0a]"><div className="gold-ring" /></div>;
 
-  const { event, invitation } = data;
-  const cancelled = event.status === "cancelled";
-  const showQr = !cancelled && invitation.status !== "declined";
-  const canRsvp = !cancelled && invitation.status !== "checked_in";
+  if (err && !data) return (
+    <div className="min-h-screen flex flex-col bg-[#0c0b0a] grain">
+      <header className="max-w-6xl w-full mx-auto px-6 py-6"><Link to="/" className="flex items-center gap-2"><span className="w-8 h-8 rounded-full border border-[#c9a962]/40 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-[#c9a962]" /></span><span className="font-display text-xl text-cream">Lumen</span></Link></header>
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="font-display text-4xl text-cream mb-3">Invitation unavailable</div>
+          <p className="text-[#8a8178] mb-6">{err}</p>
+          <Link to="/" className="btn-ghost px-6 py-3 rounded text-sm">Return home</Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  const inv = data.invitation;
+  const ev = data.event;
 
   return (
-    <div className="min-h-screen bg-ink">
-      <div className="relative h-[46vh] min-h-[280px] overflow-hidden grain">
-        <img
-          src={event.cover_image}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-ink/20" />
-        <div className="absolute top-6 left-0 right-0 flex justify-center">
-          <div className="flex items-center gap-2">
-            <img
-              src="/images/mark.png"
-              alt=""
-              className="w-7 h-7 object-contain"
-            />
-            <span className="font-display tracking-[0.28em] text-sm">
-              LUMEN
-            </span>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#0c0b0a] grain">
+      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full border border-[#c9a962]/40 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-[#c9a962]" /></span>
+          <span className="font-display text-xl text-cream">Lumen</span>
+        </Link>
+        <div className="text-xs uppercase tracking-[0.2em] text-[#8a8178]">A private invitation</div>
+      </header>
 
-      <div className="max-w-lg mx-auto px-5 -mt-24 relative pb-16">
-        <div className="rounded-3xl bg-card border border-line card-glow p-7 sm:p-9">
-          <p className="text-center text-[11px] uppercase tracking-[0.32em] text-gold mb-3">
-            You are invited
-          </p>
-          <img
-            src="/images/flourish.png"
-            alt=""
-            className="h-8 mx-auto mb-5 opacity-80"
+      <main className="max-w-2xl mx-auto px-6 py-12">
+        <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-10 md:p-14 card-glow overflow-hidden text-center">
+          <div className="corner-tl" /><div className="corner-tr" /><div className="corner-bl" /><div className="corner-br" />
+          <div
+            className="absolute inset-0 opacity-30 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at 50% 0%, rgba(201,169,98,0.2), transparent 60%)' }}
           />
-          <h1 className="font-display text-4xl sm:text-5xl text-center leading-tight mb-2">
-            {event.title}
-          </h1>
-          <p className="text-center text-muted text-sm mb-6">
-            For <span className="text-gold-2">{invitation.guest_name}</span>
-          </p>
 
-          {event.description && (
-            <p className="text-center text-cream/75 leading-relaxed mb-8">
-              {event.description}
-            </p>
-          )}
+          <div className="relative">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">You are invited</div>
+            <div className="font-display italic text-lg text-[#e8d5a3] mb-4">{inv.guest_name},</div>
+            <h1 className="font-display text-4xl md:text-5xl gold-gradient-text mb-2 leading-tight">{ev.title}</h1>
+            {ev.description && <p className="text-[#8a8178] max-w-md mx-auto mt-4 leading-relaxed">{ev.description}</p>}
 
-          <div className="space-y-3 text-sm mb-8">
-            <p className="flex items-start gap-3 text-muted">
-              <Clock size={16} className="text-gold mt-0.5 shrink-0" />
-              <span>
-                <span className="text-cream block">
-                  {formatDate(event.starts_at)}
-                </span>
-                {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
-              </span>
-            </p>
-            <p className="flex items-start gap-3 text-muted">
-              <MapPin size={16} className="text-gold mt-0.5 shrink-0" />
-              <span>
-                <span className="text-cream block">{event.venue}</span>
-                {event.address}
-              </span>
-            </p>
-            {event.dress_code && (
-              <p className="flex items-center gap-3 text-muted">
-                <Shirt size={16} className="text-gold shrink-0" />
-                <span className="text-cream">{event.dress_code}</span>
-              </p>
-            )}
-            <div className="pt-2">
-              <VenueMap
-                venue={event.venue}
-                address={event.address}
-                height={180}
-              />
+            <div className="hairline w-24 mx-auto my-8" />
+
+            <div className="space-y-3 text-sm inline-block text-left">
+              <div className="flex items-center gap-3 text-cream"><Calendar className="w-4 h-4 text-[#c9a962]" /> {formatDate(ev.starts_at)} · {formatTime(ev.starts_at)}</div>
+              <div className="flex items-center gap-3 text-cream"><MapPin className="w-4 h-4 text-[#c9a962]" /> {ev.venue}{ev.address ? ` · ${ev.address}` : ''}</div>
+              {ev.dress_code && <div className="flex items-center gap-3 text-cream"><Shirt className="w-4 h-4 text-[#c9a962]" /> {ev.dress_code}</div>}
+              {inv.plus_ones > 0 && <div className="flex items-center gap-3 text-cream"><Sparkles className="w-4 h-4 text-[#c9a962]" /> Plus {inv.plus_ones}</div>}
+            </div>
+
+            {err && <div className="mt-6 text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-4 py-3">{err}</div>}
+
+            <div className="mt-10">
+              {inv.status === 'accepted' ? (
+                <div>
+                  <div className="inline-flex items-center gap-2 text-[#7d9b7f] mb-4"><Check className="w-4 h-4" /><span className="text-sm uppercase tracking-[0.2em]">You’re on the list</span></div>
+                  <div>
+                    <Link to={user ? '/my-tickets' : `/login?next=/my-tickets`} className="btn-gold px-8 py-3 rounded text-sm inline-flex items-center gap-2">
+                      See your ticket <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              ) : inv.status === 'declined' ? (
+                <div className="text-[#c47865] text-sm">You have declined this invitation.</div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button onClick={accept} disabled={busy} className="btn-gold px-8 py-3 rounded text-sm inline-flex items-center gap-2">
+                    {busy ? <div className="gold-ring" style={{width:16,height:16}}/> : <><Check className="w-4 h-4"/>Accept with pleasure</>}
+                  </button>
+                  <button onClick={decline} disabled={busy} className="btn-ghost px-6 py-3 rounded text-sm inline-flex items-center gap-2">
+                    <X className="w-4 h-4"/>Regretfully decline
+                  </button>
+                </div>
+              )}
+              {!user && inv.status === 'pending' && (
+                <div className="mt-4 text-[11px] text-[#8a8178]">You’ll be asked to sign in as a guest to secure your ticket.</div>
+              )}
             </div>
           </div>
-
-          <div className="flex justify-center mb-5">
-            <InviteBadge status={invitation.status} />
-          </div>
-
-          {cancelled && (
-            <p className="text-center text-rose text-sm mb-4">
-              This evening has been cancelled.
-            </p>
-          )}
-          {error && (
-            <p className="text-center text-rose text-sm mb-4">{error}</p>
-          )}
-
-          {canRsvp && (
-            <div className="flex gap-2 mb-8">
-              <button
-                disabled={busy}
-                onClick={() => rsvp("accepted")}
-                className={`flex-1 py-2.5 rounded-full text-sm transition-colors ${
-                  invitation.status === "accepted"
-                    ? "bg-sage text-ink"
-                    : "bg-gold text-ink hover:bg-gold-2"
-                }`}
-              >
-                {invitation.status === "accepted" ? "Accepted" : "Accept"}
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => rsvp("declined")}
-                className={`flex-1 py-2.5 rounded-full text-sm border ${
-                  invitation.status === "declined"
-                    ? "border-rose text-rose bg-rose/10"
-                    : "border-line text-muted hover:text-cream"
-                }`}
-              >
-                Decline
-              </button>
-            </div>
-          )}
-
-          {showQr && <TicketCard invitation={invitation} event={event} />}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

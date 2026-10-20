@@ -1,73 +1,78 @@
-# React + TypeScript + Vite
+# Lumen Pass
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links; attendees accept invitations to receive QR passes; hosts verify passes at the door.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Install dependencies and run the frontend:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`npm run dev` starts Vite only. To run the frontend and the Vercel-style API handlers in `api/` together locally, use:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm run dev:fullstack
 ```
+
+This uses the Vercel CLI and may ask you to install it, sign in, or link the project the first time. The API also needs the server-only environment variables listed below. A frontend-only Vite session cannot complete profiles, tickets, or scans.
+
+Useful checks:
+
+```sh
+npm run build
+npm run lint
+```
+
+## Environment
+
+Configure these values in your local environment and in the serverless deployment settings:
+
+| Variable | Where it is used | Notes |
+| --- | --- | --- |
+| `VITE_SUPABASE_URL` | Browser | Supabase project URL, e.g. `https://<project-ref>.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Browser | Supabase publishable/anon key; safe for browser use |
+| `NEXT_PUBLIC_SUPABASE_URL` | API | Same project URL; `/rest/v1` suffix is accepted but should be omitted |
+| `SUPABASE_SERVICE_ROLE_KEY` | API only | Privileged key; never use a `VITE_` prefix or expose it to the browser |
+| `QR_SIGNING_SECRET` | API only | At least 32 bytes of private random material; required to issue and verify signed passes |
+
+Generate a QR signing secret in PowerShell without printing it to the console:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$env:QR_SIGNING_SECRET = [Convert]::ToBase64String($bytes)
+Set-Clipboard $env:QR_SIGNING_SECRET
+$rng.Dispose()
+```
+
+The secret is copied to the clipboard without printing it. Add it to local `.env` and the API's deployment secret settings. Do not commit `.env` or deployment secrets.
+
+The current sign-in screen supports email and password. A `VITE_GOOGLE_CLIENT_ID` value alone does not enable Google sign-in; configure an OAuth provider in Supabase and implement/use the corresponding sign-in flow before relying on it.
+
+## Supabase database
+
+The API uses the Supabase service key on the server and expects these tables and fields. Create/apply the schema before using the app; this repository currently has no database migration.
+
+- `profiles`: `id`, unique `user_id` referencing `auth.users.id`, `email`, `display_name`, `role` (`host` or `attendee`), optional `username`, and `created_at`.
+- `events`: `id`, `host_id` referencing `auth.users.id`, `title`, `description`, `venue`, `address`, `starts_at`, `ends_at`, `capacity`, `dress_code`, `cover_url`, and `created_at`.
+- `invitations`: `id`, `event_id`, unique `token`, `guest_name`, `guest_email`, `plus_ones`, `status`, optional `claimed_by`, `claimed_at`, `guest_phone`, `note`, and `created_at`.
+- `tickets`: `id`, unique `invitation_id`, `event_id`, `attendee_id`, `qr_secret`, nullable `checked_in_at` and `checked_in_by`, and `created_at`.
+- `scan_logs`: `id`, `event_id`, nullable `ticket_id`, `result` (`valid`, `duplicate`, or `invalid`), nullable `guest_name`, `scanner_id`, and `created_at`.
+
+Use ID types and foreign keys consistently across these tables. Add a unique constraint on `tickets.invitation_id` so accepting the same invitation cannot issue multiple tickets. The service key bypasses row-level security; keep it server-side and retain the API's user and event-ownership checks. Review and enable appropriate RLS policies before exposing any direct browser database access.
+
+Before enabling invitation acceptance, apply [`database/migrations/20261015_capacity_acceptance.sql`](./database/migrations/20261015_capacity_acceptance.sql) in the Supabase SQL editor or your migration workflow. It serializes acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The migration assumes the table/column names above, `auth.users.id` is UUID, and `service_role`, `authenticated`, and `anon` are available database roles.
+
+## Deployment checklist
+
+1. Create/configure a Supabase project, enable email/password authentication, and create the tables above.
+2. Deploy the frontend and `api/` handlers together, or configure a same-origin `/api/*` rewrite to the deployed API.
+3. Set all environment variables in the hosting provider; set `QR_SIGNING_SECRET` to a stable secret so existing QR passes remain verifiable between deployments.
+4. Configure the deployed site's URL and allowed redirect URLs in Supabase Auth.
+5. Test sign-up/profile creation, event and invitation creation, acceptance/ticket issuance, QR scanning (including duplicate scans), profile updates, and the deployed camera flow.
+
+Automatic email delivery is not configured. Invitation and ticket screens currently offer links and email drafts for the user to send manually.

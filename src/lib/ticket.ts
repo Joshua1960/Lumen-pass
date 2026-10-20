@@ -244,7 +244,7 @@ async function renderTicketCanvas(
   if (!ctx) throw new Error("Canvas unavailable");
   const [qrUrl, cover] = await Promise.all([
     qrDataUrl(ticketPayload(spec.invitation), 1024),
-    loadImage(spec.event.cover_image),
+    loadImage(spec.event.cover_image || ""),
   ]);
   const qr = await loadImage(qrUrl);
   if (!qr) throw new Error("QR render failed");

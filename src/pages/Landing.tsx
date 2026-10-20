@@ -1,230 +1,114 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  QrCode,
-  PenLine,
-  ScanLine,
-  ShieldCheck,
-  Sparkles,
-  Clock,
-} from "lucide-react";
-import Navbar from "../components/Navbar";
-import { useAuth } from "../contexts/useAuth";
-
-const steps = [
-  {
-    icon: PenLine,
-    n: "01",
-    title: "Compose",
-    body: "Set the evening — venue, hour, dress, and a cover that feels like the room.",
-  },
-  {
-    icon: QrCode,
-    n: "02",
-    title: "Seal",
-    body: "Each guest receives a unique invitation with a private QR that cannot be reused.",
-  },
-  {
-    icon: ScanLine,
-    n: "03",
-    title: "Admit",
-    body: "At the door, scan once. Instant verification. Attendance written to the book.",
-  },
-];
-
-const features = [
-  {
-    icon: ShieldCheck,
-    title: "One-time tokens",
-    body: "Every invitation carries a cryptographic QR. Duplicates are refused on sight.",
-  },
-  {
-    icon: Clock,
-    title: "Live attendance",
-    body: "A running log of every scan — welcome, already in, declined, or unknown.",
-  },
-  {
-    icon: Sparkles,
-    title: "Guest-facing beauty",
-    body: "Invites look like stationery, not software. RSVP and present the seal at the door.",
-  },
-];
+import { Link } from 'react-router-dom';
+import { Sparkles, QrCode, ScanLine, ShieldCheck, ArrowRight, Send, DoorOpen } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Landing() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const enterTo = user ? (profile?.role === 'host' ? '/dashboard' : '/my-tickets') : '/login';
 
   return (
-    <div className="min-h-screen bg-ink text-cream">
-      <Navbar />
+    <div className="min-h-screen bg-[#0c0b0a] grain">
+      {/* Nav */}
+      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-2">
+          <span className="w-9 h-9 rounded-full border border-[#c9a962]/40 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-[#c9a962]" />
+          </span>
+          <span className="font-display text-2xl tracking-wide text-cream">Lumen</span>
+        </div>
+        <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
+          {user ? 'Continue' : 'Enter'}
+        </Link>
+      </header>
 
-      <section className="relative min-h-[88vh] flex items-end overflow-hidden grain">
-        <img
-          src="/images/hero.jpg"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-45"
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle at 20% 30%, rgba(201,169,98,0.18), transparent 50%), radial-gradient(circle at 80% 70%, rgba(196,120,101,0.12), transparent 50%)',
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/30" />
-        <div className="relative max-w-6xl mx-auto px-5 pb-20 pt-32 w-full">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[11px] uppercase tracking-[0.38em] text-gold mb-5"
-          >
-            Private evenings · Verified doors
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="font-display text-5xl sm:text-7xl lg:text-8xl leading-[0.92] max-w-4xl"
-          >
-            Invitations that know who arrived.
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
-            className="mt-6 max-w-xl text-cream/70 text-lg leading-relaxed"
-          >
-            Lumen is the quiet system behind a well-run door. Compose the
-            evening, seal each guest with a unique QR, and admit them in a
-            single scan.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.28 }}
-            className="mt-10 flex flex-wrap gap-3"
-          >
-            <Link
-              to={user ? (user.role === "attendee" ? "/my-invitations" : "/dashboard") : "/login"}
-              className="px-7 py-3 rounded-full bg-gold text-ink text-sm tracking-wide hover:bg-gold-2 transition-colors"
-            >
-              {user
-                ? user.role === "attendee"
-                  ? "View my invitations"
-                  : "Open the book"
-                : "Begin an evening"}
-            </Link>
-            <a
-              href="#how"
-              className="px-7 py-3 rounded-full border border-cream/20 text-cream text-sm tracking-wide hover:border-gold/50 transition-colors"
-            >
-              How the door works
-            </a>
-          </motion.div>
+        <div className="max-w-6xl mx-auto px-6 pt-20 pb-32 relative">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[#c9a962] border border-[#c9a962]/30 rounded-full px-4 py-1.5 mb-8">
+              <Sparkles className="w-3 h-3" /> Private invitations, verified doors
+            </div>
+            <h1 className="font-display text-6xl md:text-8xl leading-[0.95] gold-gradient-text mb-6">
+              Every guest,<br />
+              <em className="italic font-normal">expected</em>
+            </h1>
+            <p className="text-lg text-[#8a8178] leading-relaxed max-w-xl mx-auto mb-10">
+              Lumen crafts private QR passes for the invitations you send, then verifies them silently at the door. No lists shouted across the room. No fumbling for names.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to={enterTo} className="btn-gold px-8 py-3.5 rounded text-sm tracking-wide inline-flex items-center gap-2">
+                Begin curating <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a href="#how" className="btn-ghost px-8 py-3.5 rounded text-sm tracking-wide">
+                How it works
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="how" className="max-w-6xl mx-auto px-5 py-24">
-        <div className="flex justify-center mb-14">
-          <img
-            src="/images/flourish.png"
-            alt=""
-            className="h-10 object-contain opacity-80"
-          />
+      {/* Feature triad */}
+      <section id="how" className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="text-center mb-16">
+          <div className="hairline w-24 mx-auto mb-6" />
+          <h2 className="font-display text-4xl text-cream">A trilogy of quiet mechanics</h2>
         </div>
-        <div className="grid md:grid-cols-3 gap-10">
-          {steps.map((s) => (
-            <div key={s.n} className="relative">
-              <p className="font-display text-5xl text-gold/25 absolute -top-6 -left-1">
-                {s.n}
-              </p>
-              <s.icon className="text-gold mb-4" size={22} />
-              <h3 className="font-display text-3xl mb-3">{s.title}</h3>
-              <p className="text-muted leading-relaxed">{s.body}</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { icon: Send, title: 'Compose', body: 'Draft invitations by name. Each one carries a private link — no public sign-ups, no surprise walk-ins.' },
+            { icon: QrCode, title: 'Confirm', body: 'Guests accept and receive a signed QR pass tied to their ticket, downloadable and offline-ready.' },
+            { icon: ScanLine, title: 'Admit', body: 'At the door, your team scans. A soft chime for valid, a discreet flag for anything else.' },
+          ].map((f) => (
+            <div key={f.title} className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-8 card-glow">
+              <div className="corner-tl" /><div className="corner-tr" /><div className="corner-bl" /><div className="corner-br" />
+              <f.icon className="w-6 h-6 text-[#c9a962] mb-6" />
+              <h3 className="font-display text-2xl text-cream mb-3">{f.title}</h3>
+              <p className="text-sm text-[#8a8178] leading-relaxed">{f.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="border-y border-line bg-ink-2">
-        <div className="max-w-6xl mx-auto px-5 py-20 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="relative rounded-2xl overflow-hidden h-80 lg:h-[420px]">
-            <img
-              src="/images/scan.jpg"
-              alt="Scanning an invitation"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
+      {/* For hosts / for guests */}
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-10">
+            <ShieldCheck className="w-7 h-7 text-[#c9a962] mb-6" />
+            <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">For hosts</div>
+            <h3 className="font-display text-3xl text-cream mb-4">Compose the room</h3>
+            <p className="text-sm text-[#8a8178] leading-relaxed mb-8">
+              Create the evening. Send private invitations. Watch acceptances arrive. Scan pases at the door with duplicate detection and a live attendance ledger.
+            </p>
+            <Link to="/login?as=host" className="btn-gold px-6 py-3 rounded text-sm inline-flex items-center gap-2">
+              Host with Lumen <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-gold mb-3">
-              At the threshold
+
+          <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-10">
+            <DoorOpen className="w-7 h-7 text-[#c9a962] mb-6" />
+            <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">For guests</div>
+            <h3 className="font-display text-3xl text-cream mb-4">Arrive expected</h3>
+            <p className="text-sm text-[#8a8178] leading-relaxed mb-8">
+              Accept invitations from your inbox. Keep passes in one quiet place. Show your QR at the door and slip in.
             </p>
-            <h2 className="font-display text-4xl sm:text-5xl leading-tight mb-5">
-              Instant authentication, written into the evening.
-            </h2>
-            <p className="text-muted leading-relaxed mb-8">
-              Staff open the scanner, the guest presents their seal, and Lumen
-              decides in a breath — welcome, already admitted, declined, or
-              unknown. Every result is logged.
-            </p>
-            <div className="space-y-5">
-              {features.map((f) => (
-                <div key={f.title} className="flex gap-4">
-                  <div className="mt-0.5 w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center shrink-0">
-                    <f.icon size={16} className="text-gold" />
-                  </div>
-                  <div>
-                    <h4 className="text-cream mb-1">{f.title}</h4>
-                    <p className="text-sm text-muted leading-relaxed">
-                      {f.body}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Link to="/login?as=attendee" className="btn-ghost px-6 py-3 rounded text-sm inline-flex items-center gap-2">
+              Attend with Lumen <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-5 py-24 grid md:grid-cols-2 gap-8">
-        <div className="relative rounded-2xl overflow-hidden min-h-[280px] grain">
-          <img
-            src="/images/arrive.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-50"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-transparent" />
-          <div className="relative p-8 h-full flex flex-col justify-end">
-            <h3 className="font-display text-3xl mb-2">For hosts</h3>
-            <p className="text-sm text-cream/70 max-w-sm">
-              A living guest book — capacity, RSVPs, and a door you can trust.
-            </p>
-          </div>
-        </div>
-        <div className="relative rounded-2xl overflow-hidden min-h-[280px] grain">
-          <img
-            src="/images/seal.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-55"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-transparent" />
-          <div className="relative p-8 h-full flex flex-col justify-end">
-            <h3 className="font-display text-3xl mb-2">For guests</h3>
-            <p className="text-sm text-cream/70 max-w-sm">
-              A private page, a considered RSVP, and a QR that is theirs alone.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-line">
-        <div className="max-w-6xl mx-auto px-5 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/images/mark.png"
-              alt=""
-              className="w-6 h-6 object-contain"
-            />
-            <span className="font-display tracking-[0.2em] text-cream/80">
-              LUMEN
-            </span>
-          </div>
-          <p className="text-xs text-muted tracking-wide">
-            The door remembers. The evening proceeds.
-          </p>
+      <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-[#332e28]/40">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#6b6259] uppercase tracking-[0.2em]">
+          <div>© Lumen · Kept quiet, kept warm</div>
+          <div>Private invitations · Verified doors</div>
         </div>
       </footer>
     </div>
