@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Sparkles, ArrowRight, ShieldCheck, DoorOpen } from "lucide-react";
+import { ShieldCheck, DoorOpen } from "lucide-react";
 import type { Role } from "../lib/types";
+import myLogo from "../assets/gci-logo.png";
 
 export default function Login() {
   const { signIn, signUp, user, profile, loading } = useAuth();
@@ -52,31 +53,11 @@ export default function Login() {
     }
   };
 
-  const demoSignIn = async (r: Role) => {
-    setErr("");
-    setBusy(true);
-    try {
-      const creds =
-        r === "host"
-          ? { email: "host@lumen.demo", password: "demo1234" }
-          : { email: "guest@lumen.demo", password: "demo1234" };
-      setEmail(creds.email);
-      setPassword(creds.password);
-      await signIn(creds.email, creds.password);
-    } catch (e: any) {
-      setErr(e.message || "Demo sign-in failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="min-h-screen grain flex flex-col">
       <header className="max-w-6xl w-full mx-auto px-6 py-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full border border-[#c9a962]/40 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-[#c9a962]" />
-          </span>
+          <img className="h-10 w-10" src={myLogo} alt="" />
           <span className="font-display text-xl text-cream">Lumen</span>
         </Link>
         <div className="text-xs uppercase tracking-[0.2em] text-[#8a8178]">
@@ -91,11 +72,6 @@ export default function Login() {
             <h1 className="font-display text-4xl text-cream mb-2">
               {mode === "signin" ? "Welcome back" : "A quiet welcome"}
             </h1>
-            <p className="text-sm text-[#8a8178]">
-              {mode === "signin"
-                ? "Enter to see your evening."
-                : "Tell us how to greet you."}
-            </p>
           </div>
 
           <div className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-8 card-glow">
@@ -115,9 +91,6 @@ export default function Login() {
                     onClick={() => setRole("host")}
                     className={`p-3 rounded border text-left transition-all ${role === "host" ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/40"}`}
                   >
-                    <ShieldCheck
-                      className={`w-4 h-4 mb-1.5 ${role === "host" ? "text-[#c9a962]" : "text-[#8a8178]"}`}
-                    />
                     <div className="text-sm text-cream">Host</div>
                     <div className="text-[11px] text-[#8a8178] mt-0.5">
                       Compose events
@@ -128,12 +101,9 @@ export default function Login() {
                     onClick={() => setRole("attendee")}
                     className={`p-3 rounded border text-left transition-all ${role === "attendee" ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/40"}`}
                   >
-                    <DoorOpen
-                      className={`w-4 h-4 mb-1.5 ${role === "attendee" ? "text-[#c9a962]" : "text-[#8a8178]"}`}
-                    />
                     <div className="text-sm text-cream">Guest</div>
                     <div className="text-[11px] text-[#8a8178] mt-0.5">
-                      Attend evenings
+                      Attend Event
                     </div>
                   </button>
                 </div>
@@ -150,7 +120,7 @@ export default function Login() {
                     className="field"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="e.g. Ada Lovelace"
+                    placeholder="e.g. Igbinoba Emmanuel"
                     required
                   />
                 </div>
@@ -201,10 +171,7 @@ export default function Login() {
                     style={{ width: 18, height: 18 }}
                   />
                 ) : (
-                  <>
-                    {mode === "signin" ? "Enter" : "Create"}{" "}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                  <>{mode === "signin" ? "Enter" : "Create Account"} </>
                 )}
               </button>
             </form>
@@ -215,30 +182,8 @@ export default function Login() {
                 className="text-xs text-[#8a8178] hover:text-[#c9a962] tracking-wide"
               >
                 {mode === "signin"
-                  ? "New here? Compose an account"
+                  ? "New here? Create an account"
                   : "Have an account? Sign in"}
-              </button>
-            </div>
-
-            <div className="hairline my-6 opacity-40" />
-
-            <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-3 text-center">
-              Try a demo
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                disabled={busy}
-                onClick={() => demoSignIn("host")}
-                className="btn-ghost text-xs py-2.5 rounded"
-              >
-                Demo host
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => demoSignIn("attendee")}
-                className="btn-ghost text-xs py-2.5 rounded"
-              >
-                Demo guest
               </button>
             </div>
           </div>
