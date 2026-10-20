@@ -14,11 +14,11 @@ SET search_path = public
 AS $$
 DECLARE
   v_event_id public.events.id%TYPE;
-  v_capacity integer;
+  v_capacity bigint;
   v_status text;
   v_claimed_by uuid;
   v_plus_ones integer;
-  v_used integer;
+  v_used bigint;
 BEGIN
   SELECT e.id, e.capacity, i.status, i.claimed_by, i.plus_ones
     INTO v_event_id, v_capacity, v_status, v_claimed_by, v_plus_ones
@@ -46,7 +46,7 @@ BEGIN
     RETURN jsonb_build_object('accepted', false, 'reason', 'capacity_not_configured');
   END IF;
 
-  SELECT COALESCE(SUM(1 + GREATEST(COALESCE(i.plus_ones, 0), 0)), 0)::integer
+  SELECT COALESCE(SUM(1 + GREATEST(COALESCE(i.plus_ones, 0), 0)), 0)::bigint
     INTO v_used
     FROM public.invitations AS i
    WHERE i.event_id = v_event_id

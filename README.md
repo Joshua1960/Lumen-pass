@@ -55,7 +55,14 @@ The current sign-in screen supports email and password. A `VITE_GOOGLE_CLIENT_ID
 
 ## Supabase database
 
-The API uses the Supabase service key on the server and expects these tables and fields. Create/apply the schema before using the app; this repository currently has no database migration.
+The API uses the Supabase service key on the server and expects these tables and fields. Apply the tracked schema migrations to the linked project before using the app:
+
+```sh
+npx supabase link --project-ref <project-ref>
+npx supabase db push --linked
+```
+
+The first migration creates or reconciles the tables below, including foreign keys, indexes, and row-level security. It preserves existing rows while correcting legacy column names and types. Tables have no direct-access policies: the server-side service key bypasses RLS, while browser access remains restricted.
 
 - `profiles`: `id`, unique `user_id` referencing `auth.users.id`, `email`, `display_name`, `role` (`host` or `attendee`), optional `username`, and `created_at`.
 - `events`: `id`, `host_id` referencing `auth.users.id`, `title`, `description`, `venue`, `address`, `starts_at`, `ends_at`, `capacity`, `dress_code`, `cover_url`, and `created_at`.
@@ -65,11 +72,11 @@ The API uses the Supabase service key on the server and expects these tables and
 
 Use ID types and foreign keys consistently across these tables. Add a unique constraint on `tickets.invitation_id` so accepting the same invitation cannot issue multiple tickets. The service key bypasses row-level security; keep it server-side and retain the API's user and event-ownership checks. Review and enable appropriate RLS policies before exposing any direct browser database access.
 
-Before enabling invitation acceptance, apply [`database/migrations/20261015_capacity_acceptance.sql`](./database/migrations/20261015_capacity_acceptance.sql) in the Supabase SQL editor or your migration workflow. It serializes acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The migration assumes the table/column names above, `auth.users.id` is UUID, and `service_role`, `authenticated`, and `anon` are available database roles.
+The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation.
 
 ## Deployment checklist
 
-1. Create/configure a Supabase project, enable email/password authentication, and create the tables above.
+1. Create/configure a Supabase project, enable email/password authentication, and apply the database migrations.
 2. Deploy the frontend and `api/` handlers together, or configure a same-origin `/api/*` rewrite to the deployed API.
 3. Set all environment variables in the hosting provider; set `QR_SIGNING_SECRET` to a stable secret so existing QR passes remain verifiable between deployments.
 4. Configure the deployed site's URL and allowed redirect URLs in Supabase Auth.

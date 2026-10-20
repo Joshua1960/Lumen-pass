@@ -91,9 +91,9 @@ export default function Admin() {
             className="text-[11px] uppercase tracking-[0.3em] text-gold
            mb-2 flex items-center gap-2"
           >
-            <LayoutDashboard className="w-3.5 h-3.5" /> Admin · overview
+            Admin Dashboard
           </div>
-          <h1 className="font-display text-5xl text-cream">The Ledger</h1>
+          <h1 className="font-display text-5xl text-cream">Overview</h1>
           <p className="text-muted mt-2">
             Every event, every guest, every door in one place.
           </p>
