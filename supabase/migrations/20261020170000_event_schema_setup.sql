@@ -64,6 +64,21 @@ CREATE TABLE IF NOT EXISTS public.scan_logs (
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS id uuid DEFAULT gen_random_uuid(),
   ADD COLUMN IF NOT EXISTS username text;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'events' AND column_name = 'start_at'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'events' AND column_name = 'starts_at'
+  ) THEN
+    ALTER TABLE public.events RENAME COLUMN start_at TO starts_at;
+  END IF;
+END;
+$$;
+
 ALTER TABLE public.events
   ADD COLUMN IF NOT EXISTS host_id uuid,
   ADD COLUMN IF NOT EXISTS title text,
@@ -106,25 +121,6 @@ ALTER TABLE public.scan_logs
   ADD COLUMN IF NOT EXISTS guest_name text,
   ADD COLUMN IF NOT EXISTS scanner_id uuid,
   ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
-
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'events' AND column_name = 'start_at'
-  ) AND NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'events' AND column_name = 'starts_at'
-  ) THEN
-    ALTER TABLE public.events RENAME COLUMN start_at TO starts_at;
-  ELSIF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'events' AND column_name = 'start_at'
-  ) THEN
-    UPDATE public.events SET starts_at = start_at WHERE starts_at IS NULL;
-  END IF;
-END;
-$$;
 
 DO $$
 DECLARE
