@@ -12,6 +12,12 @@ export function friendlyError(err, fallback = 'We could not complete that reques
   if (normalized.includes('permission') || normalized.includes('forbidden') || normalized.includes('policy')) {
     return 'You do not have permission to do that.';
   }
+  if (normalized.includes('column') && normalized.includes('does not exist')) {
+    return 'The event data is not fully set up yet. Please contact support or run the database setup again.';
+  }
+  if (normalized.includes('relation') && normalized.includes('does not exist')) {
+    return 'The database tables are not fully set up yet. Please contact support or run the database setup again.';
+  }
   if (normalized.includes('not found') || normalized.includes('no rows') || normalized.includes('does not exist')) {
     return 'We could not find that record. Please refresh and try again.';
   }

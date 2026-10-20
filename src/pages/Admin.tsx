@@ -109,22 +109,19 @@ export default function Admin() {
           <>
             {/* Totals */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-              <Tile icon={Calendar} label="Events" value={data.totals.events} />
+              <Tile label="Events" value={data.totals.events} />
               <Tile
-                icon={Users}
                 label="Guests invited"
                 value={data.totals.invitations}
                 sub={`${data.totals.accepted} accepted · ${data.totals.declined} declined`}
               />
               <Tile
-                icon={ShieldCheck}
                 label="Passes issued"
                 value={data.totals.tickets}
                 sub={`${data.totals.arrived} arrived`}
                 accent="#7d9b7f"
               />
               <Tile
-                icon={Activity}
                 label="Recent scans"
                 value={data.totals.scans}
                 sub={`${data.totals.valid} valid · ${data.totals.duplicate} dup · ${data.totals.invalid} bad`}
@@ -244,7 +241,7 @@ function Tile({
   return (
     <div className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-5 card-glow">
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#8a8178] mb-2">
-        <Icon className="w-3.5 h-3.5 text-[#c9a962]" /> {label}
+        {label}
       </div>
       <div
         className="font-display text-4xl"
