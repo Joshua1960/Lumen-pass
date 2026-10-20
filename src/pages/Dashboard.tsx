@@ -101,7 +101,7 @@ export default function Dashboard() {
             <div className="corner-bl" />
             <div className="corner-br" />
             <Calendar className="w-10 h-10 text-[#c9a962] mx-auto mb-4 opacity-70" />
-            <h2 className="font-display text-3xl text-cream mb-2">No evengt</h2>
+            <h2 className="font-display text-3xl text-cream mb-2">No event</h2>
             <p className="text-[#8a8178] max-w-md mx-auto mb-6">
               Create you first event.
             </p>
@@ -109,7 +109,7 @@ export default function Dashboard() {
               to="/events/new"
               className="btn-gold px-6 py-3 rounded text-sm inline-flex items-center gap-2"
             >
-              Create first event
+              Create event
             </Link>
           </div>
         )}
