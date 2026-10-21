@@ -6,10 +6,12 @@ import { api } from "../lib/api";
 import { formatDate, formatTime } from "../lib/format";
 import type { Event } from "../lib/types";
 
+type PublicEventDetails = Event & { remaining_capacity: number };
+
 export default function PublicEvent() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [event, setEvent] = useState<Event | null>(null);
+  const [event, setEvent] = useState<PublicEventDetails | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
@@ -91,12 +93,18 @@ export default function PublicEvent() {
                   Dress code: {event.dress_code}
                 </p>
               )}
+              {event.remaining_capacity < 1 && (
+                <p className="text-sm text-[#c47865] mt-4">
+                  This event is full and is no longer accepting attendance requests.
+                </p>
+              )}
             </div>
 
-            <form
-              onSubmit={submit}
-              className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-8 space-y-5"
-            >
+            {event.remaining_capacity > 0 && (
+              <form
+                onSubmit={submit}
+                className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-8 space-y-5"
+              >
               <div className="corner-tl" />
               <div className="corner-tr" />
               <div className="corner-bl" />
@@ -153,7 +161,8 @@ export default function PublicEvent() {
               >
                 {submitting ? "Sending request…" : "Send attendance request"}
               </button>
-            </form>
+              </form>
+            )}
           </>
         ) : (
           <div className="text-center py-20 text-[#8a8178]">

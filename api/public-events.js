@@ -4,7 +4,7 @@ import { friendlyError } from './friendly-error.js';
 
 const publicFields = 'id, title, description, venue, address, starts_at, ends_at, capacity, dress_code, cover_url, is_public';
 
-async function availableEvents(id) {
+async function availableEvents(id, includeFull = false) {
   let query = supabase
     .from('events')
     .select(publicFields)
@@ -39,7 +39,7 @@ async function availableEvents(id) {
       remaining_capacity:
         Number(event.capacity) - (occupiedByEvent.get(event.id) || 0),
     }))
-    .filter((event) => event.remaining_capacity > 0);
+    .filter((event) => includeFull || event.remaining_capacity > 0);
 }
 
 export default async function handler(req, res) {
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const events = await availableEvents(req.query.id);
+    const events = await availableEvents(req.query.id, Boolean(req.query.id));
     if (req.query.id && !events.length) {
       return res.status(404).json({ error: 'Event not found or no longer available.' });
     }
