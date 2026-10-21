@@ -4,12 +4,13 @@ import { friendlyError } from './friendly-error.js';
 
 const publicFields = 'id, title, description, venue, address, starts_at, ends_at, capacity, dress_code, cover_url, is_public';
 
-async function availableEvents(id, includeFull = false) {
+async function availableEvents(id) {
+  const now = new Date().toISOString();
   let query = supabase
     .from('events')
     .select(publicFields)
     .eq('is_public', true)
-    .gte('starts_at', new Date().toISOString())
+    .or(`ends_at.is.null,ends_at.gte.${now}`)
     .order('starts_at', { ascending: true });
   if (id) query = query.eq('id', id);
 
@@ -33,13 +34,11 @@ async function availableEvents(id, includeFull = false) {
     );
   }
 
-  return events
-    .map((event) => ({
-      ...event,
-      remaining_capacity:
-        Number(event.capacity) - (occupiedByEvent.get(event.id) || 0),
-    }))
-    .filter((event) => includeFull || event.remaining_capacity > 0);
+  return events.map((event) => ({
+    ...event,
+    remaining_capacity:
+      Number(event.capacity) - (occupiedByEvent.get(event.id) || 0),
+  }));
 }
 
 export default async function handler(req, res) {
@@ -48,7 +47,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const events = await availableEvents(req.query.id, Boolean(req.query.id));
+    const events = await availableEvents(req.query.id);
     if (req.query.id && !events.length) {
       return res.status(404).json({ error: 'Event not found or no longer available.' });
     }

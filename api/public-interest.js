@@ -32,9 +32,9 @@ export default async function handler(req, res) {
 
       const { data: event, error: eventError } = await supabase
         .from('events')
-        .select('id, starts_at, capacity, is_public')
+        .select('id, ends_at, capacity, is_public')
         .eq('id', event_id)
-        .gte('starts_at', new Date().toISOString())
+        .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
         .maybeSingle();
       if (eventError) throw eventError;
       if (!event) return res.status(404).json({ error: 'Event not found or no longer available.' });
@@ -68,26 +68,28 @@ export default async function handler(req, res) {
         return res.status(409).json({ error: 'A request for this email is already awaiting review.' });
       }
 
-      const { data: invitation, error } = await supabase
-        .from('invitations')
-        .insert({
-          event_id,
-          token: randomToken(48),
-          guest_name: name,
-          guest_email: email,
-          plus_ones: 0,
-          status: 'requested',
-        })
-        .select('token, status')
-        .single();
+      const claimToken = randomToken(48);
+      const { data: request, error } = await supabase.rpc(
+        'create_public_interest_with_ticket',
+        {
+          p_event_id: event_id,
+          p_token: claimToken,
+          p_guest_name: name,
+          p_guest_email: email,
+          p_qr_secret: randomToken(40),
+        },
+      );
       if (error?.code === '23505') {
         return res.status(409).json({ error: 'A request for this email is already awaiting review.' });
       }
       if (error) throw error;
+      if (!request?.invitation_id) {
+        throw new Error('The attendance request could not be created.');
+      }
 
       return res.status(201).json({
-        claim_token: invitation.token,
-        status: invitation.status,
+        claim_token: claimToken,
+        status: 'requested',
       });
     }
 
@@ -112,19 +114,21 @@ export default async function handler(req, res) {
         .single();
       if (eventError) throw eventError;
 
-      let ticket = null;
-      if (invitation.status === 'accepted') {
-        const { data, error: ticketError } = await supabase
-          .from('tickets')
-          .select('id, event_id, qr_secret, checked_in_at')
-          .eq('invitation_id', invitation.id)
-          .maybeSingle();
-        if (ticketError) throw ticketError;
-        if (!data) {
-          return res.status(409).json({ error: 'Your pass is still being prepared. Please try again shortly.' });
-        }
-        ticket = { ...data, qr_token: ticketToken(data) };
+      const { data, error: ticketError } = await supabase
+        .from('tickets')
+        .select('id, event_id, qr_secret, checked_in_at')
+        .eq('invitation_id', invitation.id)
+        .maybeSingle();
+      if (ticketError) throw ticketError;
+      if (!data) {
+        return res.status(409).json({ error: 'Your QR pass is still being prepared. Please try again shortly.' });
       }
+      const ticket = {
+        id: data.id,
+        event_id: data.event_id,
+        checked_in_at: data.checked_in_at,
+        qr_token: ticketToken(data),
+      };
 
       return res.status(200).json({
         invitation: { guest_name: invitation.guest_name, status: invitation.status },

@@ -1,10 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
-import { Camera, Zap, ZapOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Html5Qrcode } from "html5-qrcode";
+import { Camera } from "lucide-react";
 
-interface CameraDevice { id: string; label: string }
+interface CameraDevice {
+  id: string;
+  label: string;
+}
 
-export default function QRScanner({ onScan, paused = false }: { onScan: (raw: string) => void; paused?: boolean }) {
+export default function QRScanner({
+  onScan,
+  paused = false,
+}: {
+  onScan: (raw: string) => void;
+  paused?: boolean;
+}) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scanningRef = useRef(false);
   const lastScanRef = useRef<{ text: string; time: number } | null>(null);
@@ -15,29 +24,36 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
   }, [onScan]);
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
-  const [cameraId, setCameraId] = useState<string>('');
+  const [cameraId, setCameraId] = useState<string>("");
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [ready, setReady] = useState(false);
 
   // Discover available cameras once at mount.
   useEffect(() => {
     let cancelled = false;
     Html5Qrcode.getCameras()
-      .then(devs => {
+      .then((devs) => {
         if (cancelled) return;
-        const list = devs.map(d => ({ id: d.id, label: d.label || `Camera ${d.id.slice(0, 4)}` }));
+        const list = devs.map((d) => ({
+          id: d.id,
+          label: d.label || `Camera ${d.id.slice(0, 4)}`,
+        }));
         setCameras(list);
         // Prefer a back/environment camera when present
-        const back = list.find(d => /back|rear|environment/i.test(d.label));
-        setCameraId(back?.id || list[0]?.id || '');
+        const back = list.find((d) => /back|rear|environment/i.test(d.label));
+        setCameraId(back?.id || list[0]?.id || "");
       })
-      .catch(err => {
-        console.error('camera enumeration failed', err);
-        setError('Camera permission required. Enable camera access in your browser and reload.');
+      .catch((err) => {
+        console.error("camera enumeration failed", err);
+        setError(
+          "Camera permission required. Enable camera access in your browser and reload.",
+        );
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Start / restart scanner whenever camera changes.
@@ -48,8 +64,16 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
     const stopPrev = async () => {
       const s = scannerRef.current;
       if (s && scanningRef.current) {
-        try { await s.stop(); } catch { /* ignore */ }
-        try { await s.clear(); } catch { /* ignore */ }
+        try {
+          await s.stop();
+        } catch {
+          /* ignore */
+        }
+        try {
+          await s.clear();
+        } catch {
+          /* ignore */
+        }
         scanningRef.current = false;
       }
     };
@@ -57,9 +81,9 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
     const start = async () => {
       await stopPrev();
       if (cancelled) return;
-      setError('');
+      setError("");
       setReady(false);
-      const html5Qr = new Html5Qrcode('qr-reader', { verbose: false });
+      const html5Qr = new Html5Qrcode("qr-reader", { verbose: false });
       scannerRef.current = html5Qr;
       try {
         await html5Qr.start(
@@ -67,11 +91,18 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
           { fps: 12, qrbox: { width: 260, height: 260 }, aspectRatio: 1 },
           (decoded) => {
             const now = Date.now();
-            if (lastScanRef.current && lastScanRef.current.text === decoded && now - lastScanRef.current.time < 2500) return;
+            if (
+              lastScanRef.current &&
+              lastScanRef.current.text === decoded &&
+              now - lastScanRef.current.time < 2500
+            )
+              return;
             lastScanRef.current = { text: decoded, time: now };
             onScanRef.current(decoded);
           },
-          () => { /* per-frame scan errors are noisy; ignore */ },
+          () => {
+            /* per-frame scan errors are noisy; ignore */
+          },
         );
         scanningRef.current = true;
         setReady(true);
@@ -79,10 +110,12 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
         try {
           const caps = (html5Qr as any).getRunningTrackCameraCapabilities?.();
           setTorchSupported(Boolean(caps?.torchFeature?.().isSupported?.()));
-        } catch { setTorchSupported(false); }
+        } catch {
+          setTorchSupported(false);
+        }
       } catch (err: any) {
-        console.error('camera start failed', err);
-        setError(err?.message || 'Could not open the camera on this device.');
+        console.error("camera start failed", err);
+        setError(err?.message || "Could not open the camera on this device.");
       }
     };
 
@@ -92,7 +125,6 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
       cancelled = true;
       stopPrev();
     };
-     
   }, [cameraId]);
 
   // Pause / resume when parent asks (e.g. while showing scan result)
@@ -102,7 +134,9 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
     try {
       if (paused) s.pause(true);
       else s.resume();
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, [paused]);
 
   // Torch toggle (best-effort; ignored on browsers without support)
@@ -117,17 +151,17 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
         setTorch(!torch);
       }
     } catch (err) {
-      console.warn('torch toggle failed', err);
+      console.warn("torch toggle failed", err);
     }
   };
 
   const retry = async () => {
-    setError('');
+    setError("");
     if (!cameraId && cameras[0]) setCameraId(cameras[0].id);
     else if (cameraId) {
       // Force restart by nudging state
       const id = cameraId;
-      setCameraId('');
+      setCameraId("");
       setTimeout(() => setCameraId(id), 50);
     }
   };
@@ -148,11 +182,13 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
 
       {error && (
         <div className="mt-4 flex items-start gap-3 text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded p-3">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <div>{error}</div>
-            <button onClick={retry} className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#c9a962] hover:text-[#e8d5a3]">
-              <RefreshCw className="w-3 h-3" /> Try again
+            <button
+              onClick={retry}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#c9a962] hover:text-[#e8d5a3]"
+            >
+              Try again
             </button>
           </div>
         </div>
@@ -164,11 +200,13 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
           {cameras.length > 0 ? (
             <select
               value={cameraId}
-              onChange={e => setCameraId(e.target.value)}
+              onChange={(e) => setCameraId(e.target.value)}
               className="bg-[#141210] border border-[#332e28] text-cream text-xs rounded px-2 py-1.5 max-w-[220px]"
             >
-              {cameras.map(c => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+              {cameras.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
               ))}
             </select>
           ) : (
@@ -176,9 +214,11 @@ export default function QRScanner({ onScan, paused = false }: { onScan: (raw: st
           )}
         </div>
         {torchSupported && (
-          <button onClick={toggleTorch} className="btn-ghost text-xs px-3 py-1.5 rounded inline-flex items-center gap-1.5">
-            {torch ? <ZapOff className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-            {torch ? 'Torch off' : 'Torch on'}
+          <button
+            onClick={toggleTorch}
+            className="btn-ghost text-xs px-3 py-1.5 rounded inline-flex items-center gap-1.5"
+          >
+            {torch ? "Torch off" : "Torch on"}
           </button>
         )}
       </div>

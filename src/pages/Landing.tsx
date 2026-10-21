@@ -22,11 +22,8 @@ export default function Landing() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/events" className="text-sm text-[#c9a962] hover:text-cream">
-            Browse events
-          </Link>
           <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
-            {user ? "Continue" : "Enter"}
+            {user ? "Dashboard" : "Log in"}
           </Link>
         </div>
       </header>

@@ -2,7 +2,7 @@
 
 Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links, and can review public attendance requests. Approved guests receive QR passes that hosts verify at the door.
 
-Upcoming events are publicly discoverable. Anyone can request to attend with a name and email address, without creating an account or verifying an email address. Hosts review these requests in the event guest list; approval checks event capacity and issues a unique QR pass. The applicant must keep the private pass link shown after submitting, because automatic email delivery is not configured.
+Upcoming and in-progress events are publicly discoverable until their end time. Anyone can request to attend with a name and email address, without creating an account or verifying an email address. Each request immediately gets a unique QR pass; the pass only works at the door after the host approves the request. The applicant must keep the private pass link shown after submitting, because automatic email delivery is not configured. Events without an end time remain listed until the organiser removes them.
 
 Events are public by default and appear in event discovery. Hosts can turn off **Public event** when creating or editing an event; private events are hidden from public discovery and public attendance requests, while private invitation links remain available.
 
@@ -76,7 +76,7 @@ The first migration creates or reconciles the tables below, including foreign ke
 
 Use ID types and foreign keys consistently across these tables. Add a unique constraint on `tickets.invitation_id` so accepting the same invitation cannot issue multiple tickets. The service key bypasses row-level security; keep it server-side and retain the API's user and event-ownership checks. Review and enable appropriate RLS policies before exposing any direct browser database access.
 
-The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The public guest-pass migration allows account-free tickets and serializes host approval against event capacity. The public-event-visibility migration adds the public-by-default visibility setting. Apply all tracked migrations before using these flows.
+The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The public guest-pass migration allows account-free tickets and serializes host approval against event capacity. The public-event-visibility migration adds the public-by-default visibility setting. The guest-QR migration creates passes with public attendance requests, gates validation on host approval, and supports older requests without tickets. Apply all tracked migrations before using these flows.
 
 ## Deployment checklist
 

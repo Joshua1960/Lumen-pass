@@ -183,7 +183,11 @@ export default function GuestPass() {
             {data.ticket ? (
               <>
                 <p className="text-sm text-[#8a8178] mb-5">
-                  Approved for {data.invitation.guest_name}. Show this QR pass at the door.
+                  {data.invitation.status === "accepted"
+                    ? `Approved for ${data.invitation.guest_name}. Show this QR pass at the door.`
+                    : data.invitation.status === "requested"
+                      ? `Your QR pass is ready, but it will only work at the door after the organiser approves your request.`
+                      : "This request was declined. The QR pass will not work at the door."}
                 </p>
                 <div className="inline-flex rounded-lg bg-[#f3ebe0] p-3">
                   <QRDisplay value={data.ticket.qr_token} size={240} />

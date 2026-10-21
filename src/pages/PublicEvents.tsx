@@ -31,7 +31,7 @@ export default function PublicEvents() {
           <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-2">
             Open invitations
           </div>
-          <h1 className="font-display text-5xl text-cream">Upcoming events</h1>
+          <h1 className="font-display text-5xl text-cream">Events</h1>
           <p className="text-[#8a8178] mt-3">
             Request a place with your name and email. No attendee account needed.
           </p>
@@ -49,7 +49,7 @@ export default function PublicEvents() {
         )}
         {!loading && !error && events.length === 0 && (
           <div className="bg-[#211d19] border border-[#332e28] rounded-xl p-12 text-center text-[#8a8178]">
-            There are no upcoming events with space available right now.
+            There are no public events currently listed.
           </div>
         )}
 
@@ -81,7 +81,11 @@ export default function PublicEvents() {
                     <MapPin className="w-4 h-4 text-[#c9a962]" />
                     {event.venue}
                   </div>
-                  <div>{event.remaining_capacity} places available</div>
+                  <div>
+                    {event.remaining_capacity > 0
+                      ? `${event.remaining_capacity} places available`
+                      : "Fully booked"}
+                  </div>
                 </div>
                 {event.description && (
                   <p className="text-sm text-[#8a8178] leading-relaxed mt-4 line-clamp-3">
