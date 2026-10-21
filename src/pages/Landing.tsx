@@ -73,14 +73,17 @@ export default function Landing() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             {
+              icon: Send,
               title: "Create",
               body: "Publish events for public discovery or keep using private guest invitations.",
             },
             {
+              icon: QrCode,
               title: "Confirm",
               body: "Review guest requests and issue a signed QR pass only when you approve them.",
             },
             {
+              icon: ScanLine,
               title: "Admit",
               body: "At the door, your team scans. A soft chime for valid, a discreet flag for anything else.",
             },
