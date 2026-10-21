@@ -255,11 +255,6 @@ export default function EventForm() {
             />
             <span>
               <span className="flex items-center gap-2 text-sm text-cream">
-                {isPublic ? (
-                  <Globe2 className="w-4 h-4 text-[#c9a962]" />
-                ) : (
-                  <LockKeyhole className="w-4 h-4 text-[#c9a962]" />
-                )}
                 Public event
               </span>
               <span className="block text-xs text-[#8a8178] mt-1">

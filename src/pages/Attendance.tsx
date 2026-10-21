@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
@@ -21,27 +21,31 @@ export default function Attendance() {
   const [event, setEvent] = useState<any>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<
     "all" | "arrived" | "awaiting" | "declined"
   >("all");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
       const [ev, r] = await Promise.all([api.getEvent(id), api.attendance(id)]);
       setEvent(ev);
       setRows(r);
+      setErr("");
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : "Unable to load attendance.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
   useEffect(() => {
-    load();
+    void load();
     const t = setInterval(load, 10000);
     return () => clearInterval(t);
-  }, [id]);
+  }, [load]);
 
   const filtered = useMemo(
     () =>
@@ -136,6 +140,12 @@ export default function Attendance() {
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
         </div>
+
+        {err && (
+          <div className="text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-4 py-3 mb-6">
+            {err}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-4 gap-3 mb-6">
           {[

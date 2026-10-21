@@ -6,9 +6,7 @@ import StatusBadge from "../components/StatusBadge";
 import { api } from "../lib/api";
 import { formatDate, formatTime, countdown } from "../lib/format";
 import {
-  ArrowLeft,
   Calendar,
-  MapPin,
   ScanLine,
   ClipboardList,
   Send,
@@ -226,7 +224,7 @@ export default function EventDetail() {
           to="/dashboard"
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
         >
-          <ArrowLeft className="w-3 h-3" /> All events
+          All events
         </Link>
 
         {/* Header */}
@@ -254,7 +252,7 @@ export default function EventDetail() {
                   {formatDate(event.starts_at)} · {formatTime(event.starts_at)}
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5" /> {event.venue}
+                  {event.venue}
                   {event.address ? ` · ${event.address}` : ""}
                 </div>
                 {event.dress_code && (
