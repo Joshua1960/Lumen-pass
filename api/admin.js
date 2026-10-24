@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     const eventIds = (events || []).map(e => e.id);
     const { data: recentLogs } = eventIds.length
-      ? await supabase.from('scan_logs').select('*').in('event_id', eventIds).order('created_at', { ascending: false }).limit(100)
+      ? await supabase.from('scan_logs').select('*').in('event_id', eventIds).eq('result', 'valid').order('created_at', { ascending: false }).limit(100)
       : { data: [] };
 
     // Aggregate stats
@@ -34,9 +34,6 @@ export default async function handler(req, res) {
     const totalTickets = tks?.length || 0;
     const totalArrived = tks?.filter(t => t.checked_in_at).length || 0;
     const totalScans = recentLogs?.length || 0;
-    const validScans = recentLogs?.filter(l => l.result === 'valid').length || 0;
-    const duplicateScans = recentLogs?.filter(l => l.result === 'duplicate').length || 0;
-    const invalidScans = recentLogs?.filter(l => l.result === 'invalid').length || 0;
 
     // Per-event roll-up
     const eventStats = (events || []).map(e => {
@@ -69,9 +66,6 @@ export default async function handler(req, res) {
         tickets: totalTickets,
         arrived: totalArrived,
         scans: totalScans,
-        valid: validScans,
-        duplicate: duplicateScans,
-        invalid: invalidScans,
       },
       events: eventStats,
       recent_scans: logs,

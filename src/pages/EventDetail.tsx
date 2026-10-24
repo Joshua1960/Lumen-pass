@@ -64,11 +64,10 @@ export default function EventDetail() {
       .filter((i) => i.status === "accepted")
       .reduce((sum, invitation) => sum + 1 + (invitation.plus_ones || 0), 0);
     const declined = invitations.filter((i) => i.status === "declined").length;
-    const pending = invitations.filter((i) => i.status === "pending").length;
     const requested = invitations.filter(
       (i) => i.status === "requested",
     ).length;
-    return { total, accepted, acceptedSeats, declined, pending, requested };
+    return { total, accepted, acceptedSeats, declined, requested };
   }, [invitations]);
 
   const addOne = async () => {
@@ -284,11 +283,10 @@ export default function EventDetail() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-5 gap-6 mt-8">
+          <div className="grid md:grid-cols-4 gap-6 mt-8">
             <Stat label="Guest entries" value={stats.total} />
             <Stat label="Accepted" value={stats.accepted} accent="#7d9b7f" />
             <Stat label="Requests" value={stats.requested} accent="#d4a054" />
-            <Stat label="Pending" value={stats.pending} accent="#d4a054" />
             <Stat label="Declined" value={stats.declined} accent="#c47865" />
           </div>
           <div className="mt-6">

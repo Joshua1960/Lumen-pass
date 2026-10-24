@@ -22,9 +22,6 @@ interface AdminData {
     tickets: number;
     arrived: number;
     scans: number;
-    valid: number;
-    duplicate: number;
-    invalid: number;
   };
   events: Array<{
     id: string;
@@ -99,7 +96,7 @@ export default function Admin() {
 
         {err && (
           <div className="text-sm text-rose bg-rose/10 border border-rose/30 rounded px-4 py-3 mb-6 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> {err}
+            {err}
           </div>
         )}
 
@@ -123,9 +120,8 @@ export default function Admin() {
               />
               <Tile
                 icon={ScanLine}
-                label="Recent scans"
+                label="Valid scans"
                 value={data.totals.scans}
-                sub={`${data.totals.valid} valid · ${data.totals.duplicate} dup · ${data.totals.invalid} bad`}
               />
             </div>
 
@@ -133,7 +129,7 @@ export default function Admin() {
               {/* Events roll-up */}
               <section className="relative bg-card border border-line rounded-xl p-6">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-gold mb-4 flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5" /> Events roll-up
+                  Events roll-up
                 </div>
                 {data.events.length === 0 ? (
                   <div className="text-center py-10 text-sm text-muted">
@@ -177,7 +173,6 @@ export default function Admin() {
                             </div>
                           </div>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-sage" />
                       </Link>
                     ))}
                   </div>

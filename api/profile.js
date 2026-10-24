@@ -49,13 +49,22 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const { display_name } = req.body || {};
+      const { display_name, username } = req.body || {};
       if (typeof display_name !== 'string' || !display_name.trim()) {
         return res.status(400).json({ error: 'display_name is required' });
       }
+      if (username !== undefined && typeof username !== 'string') {
+        return res.status(400).json({ error: 'username must be a string' });
+      }
+      const trimmedUsername = username?.trim() || null;
+      if (trimmedUsername && !/^[a-zA-Z0-9_]{3,32}$/.test(trimmedUsername)) {
+        return res.status(400).json({ error: 'username must be 3-32 characters and contain only letters, numbers, or underscores' });
+      }
+      const updates = { display_name: display_name.trim() };
+      if (username !== undefined) updates.username = trimmedUsername;
       const { data, error } = await supabase
         .from('profiles')
-        .update({ display_name: display_name.trim() })
+        .update(updates)
         .eq('user_id', user.id)
         .select()
         .single();

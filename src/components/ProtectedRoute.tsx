@@ -1,10 +1,15 @@
-import { useState, type ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import type { Role } from '../lib/types';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { useState, type ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import type { Role } from "../lib/types";
 
-export default function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: Role[] }) {
+export default function ProtectedRoute({
+  children,
+  roles,
+}: {
+  children: ReactNode;
+  roles?: Role[];
+}) {
   const { user, profile, profileError, loading, refreshProfile } = useAuth();
   const [retrying, setRetrying] = useState(false);
   const location = useLocation();
@@ -25,10 +30,12 @@ export default function ProtectedRoute({ children, roles }: { children: ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <AlertTriangle className="w-8 h-8 text-[#c47865] mx-auto mb-4" />
-          <h1 className="font-display text-2xl text-cream mb-2">Profile unavailable</h1>
+          <h1 className="font-display text-2xl text-cream mb-2">
+            Profile unavailable
+          </h1>
           <p className="text-sm text-[#8a8178] mb-5">
-            {profileError || 'Your profile has not loaded, so this page cannot be opened yet.'}
+            {profileError ||
+              "Your profile has not loaded, so this page cannot be opened yet."}
           </p>
           <button
             type="button"
@@ -43,7 +50,6 @@ export default function ProtectedRoute({ children, roles }: { children: ReactNod
             }}
             className="btn-gold px-5 py-2.5 rounded text-sm inline-flex items-center gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />
             Retry
           </button>
         </div>
@@ -53,7 +59,7 @@ export default function ProtectedRoute({ children, roles }: { children: ReactNod
 
   if (roles && !roles.includes(profile.role)) {
     // Redirect to their own home
-    const home = profile.role === 'host' ? '/dashboard' : '/my-tickets';
+    const home = profile.role === "host" ? "/dashboard" : "/my-tickets";
     return <Navigate to={home} replace />;
   }
 

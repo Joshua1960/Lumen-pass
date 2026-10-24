@@ -34,7 +34,6 @@ export default function Scanner() {
   const [flash, setFlash] = useState<ScanResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [logs, setLogs] = useState<LogRow[]>([]);
-  const [totals, setTotals] = useState({ valid: 0, duplicate: 0, invalid: 0 });
   const [event, setEvent] = useState<any>(null);
   const [manualCode, setManualCode] = useState("");
   const [online, setOnline] = useState<boolean>(
@@ -52,11 +51,6 @@ export default function Scanner() {
       ]);
       setEvent(ev);
       setLogs(ls);
-      setTotals({
-        valid: ls.filter((l: LogRow) => l.result === "valid").length,
-        duplicate: ls.filter((l: LogRow) => l.result === "duplicate").length,
-        invalid: ls.filter((l: LogRow) => l.result === "invalid").length,
-      });
     } catch {
       /* offline */
     }
@@ -250,13 +244,7 @@ export default function Scanner() {
             </h1>
           </div>
           <div className="flex gap-3">
-            <StatChip label="Arrived" value={totals.valid} color="#7d9b7f" />
-            <StatChip
-              label="Duplicates"
-              value={totals.duplicate}
-              color="#d4a054"
-            />
-            <StatChip label="Invalid" value={totals.invalid} color="#c47865" />
+            <StatChip label="Valid scans" value={logs.length} color="#7d9b7f" />
           </div>
         </div>
 
@@ -369,14 +357,7 @@ export default function Scanner() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className="w-2 h-2 rounded-full"
-                      style={{
-                        background:
-                          l.result === "valid"
-                            ? "#7d9b7f"
-                            : l.result === "duplicate"
-                              ? "#d4a054"
-                              : "#c47865",
-                      }}
+                      style={{ background: "#7d9b7f" }}
                     />
                     <div className="min-w-0">
                       <div className="text-sm text-cream truncate">

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { formatDate, formatTime, countdown } from "../lib/format";
 import type { Event } from "../lib/types";
 
@@ -8,24 +8,27 @@ export default function EventCard({
   invited,
   ticketCount = 0,
   checkedIn = 0,
+  onDelete,
+  deleting = false,
 }: {
   event: Event;
   invited?: number;
   ticketCount?: number;
   checkedIn?: number;
+  onDelete?: (eventId: string) => void;
+  deleting?: boolean;
 }) {
   return (
-    <Link
-      to={`/events/${event.id}`}
-      className="group block relative bg-[#211d19] rounded-xl border border-[#332e28] hover:border-[#c9a962]/40 transition-all card-glow overflow-hidden"
+    <article
+      className="group relative bg-[#211d19] rounded-xl border border-[#332e28] hover:border-[#c9a962]/40 transition-all card-glow overflow-hidden"
     >
       <div className="corner-tl" />
       <div className="corner-tr" />
       <div className="corner-bl" />
       <div className="corner-br" />
-      <div className="p-6">
+      <Link to={`/events/${event.id}`} className="block p-6">
         <div className="flex items-start justify-between gap-4 mb-3">
-          <div>
+          <div className={onDelete ? "pr-10" : ""}>
             <div className="text-[11px] uppercase tracking-[0.2em] text-[#c9a962] mb-2">
               {countdown(event.starts_at)}
             </div>
@@ -33,7 +36,6 @@ export default function EventCard({
               {event.title}
             </h3>
           </div>
-          <ArrowUpRight className="w-4 h-4 text-[#8a8178] group-hover:text-[#c9a962] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all" />
         </div>
         <div className="hairline my-4 opacity-40" />
         <div className="space-y-2 text-sm text-[#8a8178]">
@@ -53,7 +55,19 @@ export default function EventCard({
             Arrived <span className="text-[#7d9b7f] ml-1">{checkedIn}</span>
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {onDelete && (
+        <button
+          type="button"
+          title="Delete event"
+          aria-label={`Delete ${event.title}`}
+          disabled={deleting}
+          onClick={() => onDelete(event.id)}
+          className="absolute top-5 right-5 z-10 p-2 rounded text-[#8a8178] hover:text-[#c47865] hover:bg-[#c47865]/10 disabled:opacity-50"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </article>
   );
 }

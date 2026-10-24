@@ -6,12 +6,14 @@ import { api } from "../lib/api";
 export default function Profile() {
   const { profile, refreshProfile, user } = useAuth();
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
   useEffect(() => {
     setDisplayName(profile?.display_name || "");
+    setUsername(profile?.username || "");
   }, [profile]);
 
   const save = async (e: React.FormEvent) => {
@@ -20,7 +22,10 @@ export default function Profile() {
     setErr("");
     setMsg("");
     try {
-      await api.updateProfile({ display_name: displayName.trim() });
+      await api.updateProfile({
+        display_name: displayName.trim(),
+        username: username.trim(),
+      });
       await refreshProfile();
       setMsg("Saved.");
     } catch (e: any) {
@@ -60,6 +65,18 @@ export default function Profile() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-2 flex items-center gap-1.5">
+              Username
+            </label>
+            <input
+              className="field"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
             />
           </div>
 

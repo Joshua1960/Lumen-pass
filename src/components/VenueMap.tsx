@@ -1,11 +1,10 @@
-import { ExternalLink } from 'lucide-react';
-import { mapsEmbedUrl, mapsQuery, mapsSearchUrl } from '../lib/maps';
+import { mapsEmbedUrl, mapsQuery, mapsSearchUrl } from "../lib/maps";
 
 export default function VenueMap({
   venue,
   address,
   height = 220,
-  className = '',
+  className = "",
 }: {
   venue?: string;
   address?: string;
@@ -15,14 +14,19 @@ export default function VenueMap({
   const query = mapsQuery(venue, address);
   if (!query) {
     return (
-      <div className={`rounded-2xl border border-dashed border-line bg-card flex items-center justify-center text-sm text-muted ${className}`} style={{ height }}>
+      <div
+        className={`rounded-2xl border border-dashed border-line bg-card flex items-center justify-center text-sm text-muted ${className}`}
+        style={{ height }}
+      >
         Add a venue or street address to pin the map.
       </div>
     );
   }
 
   return (
-    <div className={`rounded-2xl overflow-hidden border border-line bg-card ${className}`}>
+    <div
+      className={`rounded-2xl overflow-hidden border border-line bg-card ${className}`}
+    >
       <iframe
         title={`Map of ${query}`}
         src={mapsEmbedUrl(query)}
@@ -40,7 +44,7 @@ export default function VenueMap({
           rel="noreferrer"
           className="inline-flex items-center gap-1 text-gold-2 shrink-0 hover:underline"
         >
-          Open Maps <ExternalLink size={11} />
+          Open Maps
         </a>
       </div>
     </div>

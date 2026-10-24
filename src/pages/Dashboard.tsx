@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import EventCard from "../components/EventCard";
 import { api } from "../lib/api";
-import { Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface EventWithStats {
@@ -30,6 +29,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState<EventWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -50,6 +50,31 @@ export default function Dashboard() {
   useEffect(() => {
     load();
   }, []);
+
+  const deleteEvent = async (eventId: string) => {
+    if (
+      !confirm(
+        "Delete this event and all its invitations & tickets? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(eventId);
+    setErr("");
+    try {
+      await api.deleteEvent(eventId);
+      setEvents((current) => current.filter((event) => event.id !== eventId));
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the event. Please try again.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const upcoming = events.filter(
     (e) => new Date(e.starts_at).getTime() > Date.now() - 6 * 3600 * 1000,
@@ -101,7 +126,6 @@ export default function Dashboard() {
             <div className="corner-tr" />
             <div className="corner-bl" />
             <div className="corner-br" />
-            <Calendar className="w-10 h-10 text-[#c9a962] mx-auto mb-4 opacity-70" />
             <h2 className="font-display text-3xl text-cream mb-2">No event</h2>
             <p className="text-[#8a8178] max-w-md mx-auto mb-6">
               Create you first event.
@@ -131,6 +155,8 @@ export default function Dashboard() {
                   invited={e.invitation_count}
                   ticketCount={e.ticket_count}
                   checkedIn={e.checked_in_count}
+                  onDelete={deleteEvent}
+                  deleting={deletingId === e.id}
                 />
               ))}
             </div>
@@ -153,6 +179,8 @@ export default function Dashboard() {
                   invited={e.invitation_count}
                   ticketCount={e.ticket_count}
                   checkedIn={e.checked_in_count}
+                  onDelete={deleteEvent}
+                  deleting={deletingId === e.id}
                 />
               ))}
             </div>

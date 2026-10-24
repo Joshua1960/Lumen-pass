@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { Camera } from "lucide-react";
 
 interface CameraDevice {
   id: string;
@@ -196,7 +195,6 @@ export default function QRScanner({
 
       <div className="mt-4 flex flex-wrap items-center gap-2 justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <Camera className="w-3.5 h-3.5 text-[#c9a962] flex-shrink-0" />
           {cameras.length > 0 ? (
             <select
               value={cameraId}

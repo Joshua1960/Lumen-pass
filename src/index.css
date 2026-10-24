@@ -74,7 +74,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 .btn-gold {
-  background: linear-gradient(180deg, #e8d5a3 0%, #c9a962 100%);
+  background: #c9a962;
   color: #0c0b0a;
   transition: filter 0.2s ease, transform 0.2s ease;
   font-weight: 500;
