@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
 import { api } from "../lib/api";
 import { formatTime, formatDate } from "../lib/format";
-import { ArrowLeft, Download, Search, Users } from "lucide-react";
 
 interface Row {
   invitation_id: string;
@@ -16,32 +15,43 @@ interface Row {
   checked_in_at: string | null;
 }
 
+type AttendanceFilter = "all" | "arrived" | "awaiting" | "declined";
+
 export default function Attendance() {
   const { id } = useParams();
   const [event, setEvent] = useState<any>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<
-    "all" | "arrived" | "awaiting" | "declined"
-  >("all");
+  const [filter, setFilter] = useState<AttendanceFilter>("all");
 
-  const load = async () => {
-    if (!id) return;
+  const load = useCallback(async () => {
+    if (!id) {
+      setError("An event ID is required to load attendance.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setError("");
     try {
       const [ev, r] = await Promise.all([api.getEvent(id), api.attendance(id)]);
       setEvent(ev);
       setRows(r);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load attendance. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
   useEffect(() => {
     load();
-    const t = setInterval(load, 10000);
-    return () => clearInterval(t);
-  }, [id]);
+  }, [load]);
 
   const filtered = useMemo(
     () =>
@@ -66,6 +76,22 @@ export default function Attendance() {
   const arrived = rows.filter((r) => r.checked_in_at).length;
   const accepted = rows.filter((r) => r.status === "accepted").length;
   const declined = rows.filter((r) => r.status === "declined").length;
+  const stats: {
+    k: AttendanceFilter;
+    label: string;
+    value: number;
+    color: string;
+  }[] = [
+    { k: "all", label: "All", value: rows.length, color: "#f3ebe0" },
+    { k: "arrived", label: "Arrived", value: arrived, color: "#7d9b7f" },
+    {
+      k: "awaiting",
+      label: "Awaiting",
+      value: accepted - arrived,
+      color: "#d4a054",
+    },
+    { k: "declined", label: "Declined", value: declined, color: "#c47865" },
+  ];
 
   const exportCSV = () => {
     const header = [
@@ -116,7 +142,7 @@ export default function Attendance() {
           to={`/events/${id}`}
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
         >
-          <ArrowLeft className="w-3 h-3" /> Event
+          Event
         </Link>
 
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
@@ -133,35 +159,15 @@ export default function Attendance() {
             onClick={exportCSV}
             className="btn-ghost px-4 py-2.5 rounded text-sm inline-flex items-center gap-2"
           >
-            <Download className="w-3.5 h-3.5" /> Export CSV
+            Export CSV
           </button>
         </div>
 
         <div className="grid md:grid-cols-4 gap-3 mb-6">
-          {[
-            { k: "all", label: "All", value: rows.length, color: "#f3ebe0" },
-            {
-              k: "arrived",
-              label: "Arrived",
-              value: arrived,
-              color: "#7d9b7f",
-            },
-            {
-              k: "awaiting",
-              label: "Awaiting",
-              value: accepted - arrived,
-              color: "#d4a054",
-            },
-            {
-              k: "declined",
-              label: "Declined",
-              value: declined,
-              color: "#c47865",
-            },
-          ].map((s) => (
+          {stats.map((s) => (
             <button
               key={s.k}
-              onClick={() => setFilter(s.k as any)}
+              onClick={() => setFilter(s.k)}
               className={`text-left p-4 rounded-lg border transition-colors ${filter === s.k ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/30"}`}
             >
               <div className="text-[10px] uppercase tracking-[0.2em] text-[#8a8178]">
@@ -174,10 +180,26 @@ export default function Attendance() {
           ))}
         </div>
 
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 flex items-center justify-between gap-4 rounded border border-[#c47865]/30 bg-[#c47865]/10 px-4 py-3 text-sm text-[#c47865]"
+          >
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={load}
+              className="shrink-0 underline underline-offset-4"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         <div className="relative bg-[#211d19] border border-[#332e28] rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-[#332e28] flex items-center gap-2">
-            <Search className="w-4 h-4 text-[#8a8178]" />
+          <div className="p-4 border-b border-[#332e28] flex items-center">
             <input
+              aria-label="Search guests by name or email"
               className="flex-1 bg-transparent outline-none text-sm placeholder:text-[#6b6259]"
               placeholder="Search by name or email…"
               value={q}
@@ -187,7 +209,6 @@ export default function Attendance() {
 
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-sm text-[#8a8178]">
-              <Users className="w-8 h-8 mx-auto text-[#c9a962]/30 mb-3" />
               No matching guests.
             </div>
           ) : (

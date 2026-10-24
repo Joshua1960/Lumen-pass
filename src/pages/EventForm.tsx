@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { api } from "../lib/api";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 
 export default function EventForm() {
   const { id } = useParams();

@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import TicketCard from "../components/TicketCard";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
-import { Ticket as TicketIcon, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 
 export default function MyTickets() {
   const { profile, user } = useAuth();

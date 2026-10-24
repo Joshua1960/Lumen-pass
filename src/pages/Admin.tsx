@@ -5,13 +5,11 @@ import StatusBadge from "../components/StatusBadge";
 import { api } from "../lib/api";
 import { formatDate, formatTime, relativeTime } from "../lib/format";
 import {
-  LayoutDashboard,
   Calendar,
   Users,
   ScanLine,
   ArrowRight,
   ShieldCheck,
-  Activity,
   AlertCircle,
 } from "lucide-react";
 

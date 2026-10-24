@@ -11,17 +11,6 @@ import {
   remove as queueRemove,
   count as queueCount,
 } from "../lib/offlineQueue";
-import {
-  ArrowLeft,
-  ScanLine,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Camera,
-  Users,
-  WifiOff,
-  CloudUpload,
-} from "lucide-react";
 
 interface ScanResult {
   result: "valid" | "duplicate" | "invalid";
@@ -230,14 +219,6 @@ export default function Scanner() {
       : flash?.result === "duplicate"
         ? "#d4a054"
         : "#c47865";
-  const FlashIcon = flash?.queued
-    ? CloudUpload
-    : flash?.result === "valid"
-      ? CheckCircle2
-      : flash?.result === "duplicate"
-        ? AlertTriangle
-        : XCircle;
-
   return (
     <div className="min-h-screen bg-[#0c0b0a] grain">
       <Navbar />
@@ -246,21 +227,21 @@ export default function Scanner() {
           to={`/events/${id}`}
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
         >
-          <ArrowLeft className="w-3 h-3" /> Event
+          Event
         </Link>
 
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-2 flex items-center gap-2">
-              <span className="live-dot" /> The door · live
+              The door
               {!online && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-[#c47865] ml-2">
-                  <WifiOff className="w-3 h-3" /> Offline
+                <span className="text-[10px] text-[#c47865] ml-2">
+                  Offline
                 </span>
               )}
               {queued > 0 && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-[#d4a054] ml-2">
-                  <CloudUpload className="w-3 h-3" /> {queued} queued
+                <span className="text-[10px] text-[#d4a054] ml-2">
+                  {queued} queued
                 </span>
               )}
             </div>
@@ -286,7 +267,7 @@ export default function Scanner() {
             <div className="corner-bl" />
             <div className="corner-br" />
             <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-4 flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5" /> Camera
+              Camera
             </div>
 
             <div className="relative">
@@ -303,10 +284,6 @@ export default function Scanner() {
                     className="text-center px-6 py-8 rounded-xl border pointer-events-auto"
                     style={{ background: "#0c0b0aee", borderColor: flashColor }}
                   >
-                    <FlashIcon
-                      className="w-12 h-12 mx-auto mb-3"
-                      style={{ color: flashColor }}
-                    />
                     <div
                       className="text-[10px] uppercase tracking-[0.3em] mb-1"
                       style={{ color: flashColor }}
@@ -376,11 +353,10 @@ export default function Scanner() {
 
           <aside className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-6">
             <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-4 flex items-center gap-2">
-              <ScanLine className="w-3.5 h-3.5" /> Recent scans
+              Recent scans
             </div>
             {logs.length === 0 && (
               <div className="text-sm text-[#8a8178] text-center py-14">
-                <Users className="w-6 h-6 mx-auto mb-3 opacity-40" />
                 Awaiting the first guest…
               </div>
             )}

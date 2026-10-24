@@ -66,21 +66,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
 }
 
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #7d9b7f;
-  box-shadow: 0 0 0 0 rgba(125, 155, 127, 0.7);
-  animation: pulse-live 1.6s ease-out infinite;
-}
-
-@keyframes pulse-live {
-  0% { box-shadow: 0 0 0 0 rgba(125, 155, 127, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(125, 155, 127, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(125, 155, 127, 0); }
-}
-
 .gold-gradient-text {
   background: linear-gradient(180deg, #f3ebe0 0%, #e8d5a3 60%, #c9a962 100%);
   -webkit-background-clip: text;
