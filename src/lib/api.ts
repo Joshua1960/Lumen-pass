@@ -48,6 +48,17 @@ export const api = {
     req("/api/profile", { method: "PUT", body: JSON.stringify(body) }),
 
   listEvents: () => req("/api/events"),
+  listPublicEvents: () => req("/api/public-events"),
+  getPublicEvent: (id: string) =>
+    req(`/api/public-events?id=${encodeURIComponent(id)}`),
+  requestPublicEvent: (body: {
+    event_id: string;
+    guest_name: string;
+    guest_email: string;
+    website?: string;
+  }) => req("/api/public-interest", { method: "POST", body: JSON.stringify(body) }),
+  publicGuestPass: (token: string) =>
+    req(`/api/public-interest?token=${encodeURIComponent(token)}`),
   getEvent: (id: string) => req(`/api/events?id=${encodeURIComponent(id)}`),
   createEvent: (body: any) =>
     req("/api/events", { method: "POST", body: JSON.stringify(body) }),
@@ -65,6 +76,11 @@ export const api = {
     req("/api/invitations", { method: "POST", body: JSON.stringify(body) }),
   deleteInvitation: (id: string | number) =>
     req("/api/invitations", { method: "DELETE", body: JSON.stringify({ id }) }),
+  reviewPublicInterest: (id: string | number, status: "accepted" | "declined") =>
+    req("/api/invitations", {
+      method: "PUT",
+      body: JSON.stringify({ id, status }),
+    }),
 
   lookupInvite: (token: string) =>
     req(`/api/invite-lookup?token=${encodeURIComponent(token)}`),

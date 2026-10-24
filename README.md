@@ -1,6 +1,10 @@
 # Lumen Pass
 
-Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links; attendees accept invitations to receive QR passes; hosts verify passes at the door.
+Lumen Pass is an event invitation and ticketing app. Hosts create events and private invitation links, and can review public attendance requests. Approved guests receive QR passes that hosts verify at the door.
+
+Upcoming and in-progress events are publicly discoverable until their end time. Anyone can request to attend with a name and email address, without creating an account or verifying an email address. Each request immediately gets a unique QR pass; the pass only works at the door after the host approves the request. The applicant must keep the private pass link shown after submitting, because automatic email delivery is not configured. Events without an end time remain listed until the organiser removes them.
+
+Events are public by default and appear in event discovery. Hosts can turn off **Public event** when creating or editing an event; private events are hidden from public discovery and public attendance requests, while private invitation links remain available.
 
 ## Local development
 
@@ -65,14 +69,14 @@ npx supabase db push --linked
 The first migration creates or reconciles the tables below, including foreign keys, indexes, and row-level security. It preserves existing rows while correcting legacy column names and types. Tables have no direct-access policies: the server-side service key bypasses RLS, while browser access remains restricted.
 
 - `profiles`: `id`, unique `user_id` referencing `auth.users.id`, `email`, `display_name`, `role` (`host` or `attendee`), optional `username`, and `created_at`.
-- `events`: `id`, `host_id` referencing `auth.users.id`, `title`, `description`, `venue`, `address`, `starts_at`, `ends_at`, `capacity`, `dress_code`, `cover_url`, and `created_at`.
+- `events`: `id`, `host_id` referencing `auth.users.id`, `title`, `description`, `venue`, `address`, `starts_at`, `ends_at`, `capacity`, `dress_code`, `cover_url`, `is_public` (defaults to `true`), and `created_at`.
 - `invitations`: `id`, `event_id`, unique `token`, `guest_name`, `guest_email`, `plus_ones`, `status`, optional `claimed_by`, `claimed_at`, `guest_phone`, `note`, and `created_at`.
 - `tickets`: `id`, unique `invitation_id`, `event_id`, `attendee_id`, `qr_secret`, nullable `checked_in_at` and `checked_in_by`, and `created_at`.
 - `scan_logs`: `id`, `event_id`, nullable `ticket_id`, `result` (`valid`, `duplicate`, or `invalid`), nullable `guest_name`, `scanner_id`, and `created_at`.
 
 Use ID types and foreign keys consistently across these tables. Add a unique constraint on `tickets.invitation_id` so accepting the same invitation cannot issue multiple tickets. The service key bypasses row-level security; keep it server-side and retain the API's user and event-ownership checks. Review and enable appropriate RLS policies before exposing any direct browser database access.
 
-The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation.
+The second migration serializes invitation acceptance per event, counts accepted attendees and plus-ones against capacity, and makes ticket issuance unique per invitation. The public guest-pass migration allows account-free tickets and serializes host approval against event capacity. The public-event-visibility migration adds the public-by-default visibility setting. The guest-QR migration creates passes with public attendance requests, gates validation on host approval, and supports older requests without tickets. Apply all tracked migrations before using these flows.
 
 ## Deployment checklist
 

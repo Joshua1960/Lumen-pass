@@ -187,7 +187,7 @@ export default function Admin() {
               {/* Global scan feed */}
               <aside className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-6">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-4 flex items-center gap-2">
-                  <ScanLine className="w-3.5 h-3.5" /> Global scan log
+                  <ScanLine className="w-3.5 h-3.5" /> Scanned Guests
                 </div>
                 {data.recent_scans.length === 0 ? (
                   <div className="text-center py-10 text-sm text-[#8a8178]">

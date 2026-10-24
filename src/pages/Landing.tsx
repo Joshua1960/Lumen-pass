@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { QrCode, ScanLine, ShieldCheck, Send, DoorOpen } from "lucide-react";
+import { QrCode, ScanLine, Send, DoorOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import myLogo from "../assets/gci-logo.png";
 
@@ -21,9 +21,11 @@ export default function Landing() {
             Lumen
           </span>
         </div>
-        <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
-          {user ? "Continue" : "Enter"}
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to={enterTo} className="btn-gold px-5 py-2 rounded text-sm">
+            {user ? "Dashboard" : "Log in"}
+          </Link>
+        </div>
       </header>
 
       {/* Hero */}
@@ -37,25 +39,19 @@ export default function Landing() {
         />
         <div className=" mx-auto px-6 pt-20 pb-32 relative">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[#c9a962] border border-[#c9a962]/30 rounded-full px-4 py-1.5 mb-8">
-              Private invitations, verified doors
-            </div>
             <h1 className="font-display text-6xl md:text-8xl leading-[0.95] gold-gradient-text mb-6">
-              Every guest,
-              <br />
-              <em className="italic font-normal">expected</em>
+              Manage your event attendance. Discover upcoming events.
             </h1>
             <p className="text-lg text-[#8a8178] leading-relaxed max-w-xl mx-auto mb-10">
-              Lumen by GCI uses private QR passes for the invitations you send,
-              then verifies them at the door. No lists shouted across the hall.
-              No fumbling for names.
+              Discover upcoming events, request a place without creating an
+              account, and receive a private QR pass if the organiser approves.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                to={enterTo}
+                to="/events"
                 className="btn-gold px-8 py-3.5 rounded text-sm tracking-wide inline-flex items-center gap-2"
               >
-                Get Started
+                Browse events
               </Link>
               <a
                 href="#how"
@@ -72,21 +68,19 @@ export default function Landing() {
       <section id="how" className="max-w-6xl mx-auto px-6 pb-24">
         <div className="text-center mb-16">
           <div className="hairline w-24 mx-auto mb-6" />
-          <h2 className="font-display text-4xl text-cream">
-            A trilogy of quiet mechanics
-          </h2>
+          <h2 className="font-display text-4xl text-cream">How it Works</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
             {
               icon: Send,
-              title: "Compose",
-              body: "Draft invitations by name. Each one carries a private link — no public sign-ups, no surprise walk-ins.",
+              title: "Create",
+              body: "Publish events for public discovery or keep using private guest invitations.",
             },
             {
               icon: QrCode,
               title: "Confirm",
-              body: "Guests accept and receive a signed QR pass tied to their ticket, downloadable and offline-ready.",
+              body: "Review guest requests and issue a signed QR pass only when you approve them.",
             },
             {
               icon: ScanLine,
@@ -116,12 +110,11 @@ export default function Landing() {
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-10">
-            <ShieldCheck className="w-7 h-7 text-[#c9a962] mb-6" />
             <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">
               For hosts
             </div>
             <h3 className="font-display text-3xl text-cream mb-4">
-              Compose the room
+              Create the room
             </h3>
             <p className="text-sm text-[#8a8178] leading-relaxed mb-8">
               Create the evening. Send private invitations. Watch acceptances
@@ -132,7 +125,7 @@ export default function Landing() {
               to="/login?as=host"
               className="btn-gold px-6 py-3 rounded text-sm inline-flex items-center gap-2"
             >
-              Host with Lumen
+              Host an Event
             </Link>
           </div>
 
@@ -145,14 +138,14 @@ export default function Landing() {
               Arrive expected
             </h3>
             <p className="text-sm text-[#8a8178] leading-relaxed mb-8">
-              Accept invitations from your inbox. Keep passes in one quiet
-              place. Show your QR at the door and slip in.
+              Request to attend with your name and email. No account or email
+              verification is needed; keep your private pass link safe.
             </p>
             <Link
-              to="/login?as=attendee"
+              to="/events"
               className="btn-ghost px-6 py-3 rounded text-sm inline-flex items-center gap-2"
             >
-              Attend with Lumen
+              Browse events
             </Link>
           </div>
         </div>
@@ -160,7 +153,7 @@ export default function Landing() {
 
       <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-[#332e28]/40">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#6b6259] uppercase tracking-[0.2em]">
-          <div>© Lumen · Private invitations · Verified doors</div>
+          <div>© Lumen · Host and Manage your event Attendance</div>
           <div>Built by GCI Byte Busters</div>
         </div>
       </footer>

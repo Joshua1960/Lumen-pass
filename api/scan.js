@@ -61,7 +61,7 @@ export default async function handler(req, res) {
           result: 'invalid',
           guest_name: guestName,
           ticket_id: ticket.id,
-          message: 'This invitation is no longer accepted.',
+          message: 'The organiser has not approved this invitation. This QR pass is not valid for entry yet.',
         });
       }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,16 +14,19 @@ export default function Invite() {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
       const d = await api.lookupInvite(token);
       setData(d);
-    } catch (e: any) { setErr(e.message); }
+      setErr('');
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'Unable to load this invitation.');
+    }
     finally { setLoading(false); }
-  };
-  useEffect(() => { load(); }, [token]);
+  }, [token]);
+  useEffect(() => { void load(); }, [load]);
 
   const accept = async () => {
     if (!token) return;
@@ -33,7 +36,10 @@ export default function Invite() {
     try {
       await api.acceptInvite(token);
       nav('/my-tickets');
-    } catch (e: any) { setErr(e.message); setBusy(false); }
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'Unable to accept this invitation.');
+      setBusy(false);
+    }
   };
 
   const decline = async () => {
@@ -41,7 +47,9 @@ export default function Invite() {
     if (!confirm('Decline this invitation?')) return;
     setBusy(true);
     try { await api.declineInvite(token); await load(); }
-    catch (e: any) { setErr(e.message); }
+    catch (error) {
+      setErr(error instanceof Error ? error.message : 'Unable to decline this invitation.');
+    }
     finally { setBusy(false); }
   };
 

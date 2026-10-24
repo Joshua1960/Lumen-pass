@@ -1,5 +1,6 @@
 import supabase from './db-client.js';
 import { cors, requireProfile, requireUser, loadProfile, randomToken } from './_auth.js';
+import { ticketToken } from './_qr.js';
 import { friendlyError } from './friendly-error.js';
 
 export default async function handler(req, res) {
@@ -62,6 +63,77 @@ export default async function handler(req, res) {
       const { data, error } = await supabase.from('invitations').insert(row).select().single();
       if (error) throw error;
       return res.status(201).json(data);
+    }
+
+    if (req.method === 'PUT') {
+      const ctx = await requireProfile(req, res, ['host']); if (!ctx) return;
+      const { id, status } = req.body || {};
+      if (!id || !['accepted', 'declined'].includes(status)) {
+        return res.status(400).json({ error: 'id and a valid review status are required.' });
+      }
+
+      const { data: invitation, error: invitationError } = await supabase
+        .from('invitations')
+        .select('id, event_id, status')
+        .eq('id', id)
+        .maybeSingle();
+      if (invitationError) throw invitationError;
+      if (!invitation) return res.status(404).json({ error: 'Request not found.' });
+
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('id', invitation.event_id)
+        .eq('host_id', ctx.user.id)
+        .maybeSingle();
+      if (eventError) throw eventError;
+      if (!event) return res.status(403).json({ error: 'Forbidden' });
+      if (invitation.status !== 'requested') {
+        return res.status(409).json({ error: 'This request has already been reviewed.' });
+      }
+
+      if (status === 'declined') {
+        const { data: updated, error } = await supabase
+          .from('invitations')
+          .update({ status: 'declined' })
+          .eq('id', id)
+          .eq('status', 'requested')
+          .select()
+          .maybeSingle();
+        if (error) throw error;
+        if (!updated) return res.status(409).json({ error: 'This request has already been reviewed.' });
+        return res.status(200).json({ invitation: updated });
+      }
+
+      const { data: approval, error: approvalError } = await supabase.rpc(
+        'approve_public_interest_with_capacity',
+        { p_invitation_id: String(id), p_qr_secret: randomToken(40) },
+      );
+      if (approvalError) throw approvalError;
+      if (!approval?.accepted) {
+        const messages = {
+          not_found: 'Request not found.',
+          not_requested: 'This request has already been reviewed.',
+          capacity_reached: 'The event has reached capacity.',
+          capacity_not_configured: 'This event does not have a valid capacity configured.',
+        };
+        const code = approval?.reason === 'not_found' ? 404 : 409;
+        return res.status(code).json({
+          error: messages[approval?.reason] || 'This request could not be approved.',
+        });
+      }
+
+      const [{ data: updated, error: updatedError }, { data: ticket, error: ticketError }] =
+        await Promise.all([
+          supabase.from('invitations').select('*').eq('id', id).single(),
+          supabase.from('tickets').select('*').eq('invitation_id', id).single(),
+        ]);
+      if (updatedError) throw updatedError;
+      if (ticketError) throw ticketError;
+      return res.status(200).json({
+        invitation: updated,
+        ticket: { ...ticket, qr_token: ticketToken(ticket) },
+      });
     }
 
     if (req.method === 'DELETE') {

@@ -18,6 +18,7 @@ export default function EventForm() {
   const [capacity, setCapacity] = useState(50);
   const [dressCode, setDressCode] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(editing);
@@ -40,6 +41,7 @@ export default function EventForm() {
         setCapacity(e.capacity ?? 50);
         setDressCode(e.dress_code || "");
         setCoverUrl(e.cover_url || "");
+        setIsPublic(e.is_public !== false);
       } catch (e: any) {
         setErr(e.message);
       } finally {
@@ -67,6 +69,7 @@ export default function EventForm() {
         capacity: Number(capacity),
         dress_code: dressCode.trim() || null,
         cover_url: coverUrl.trim() || null,
+        is_public: isPublic,
       };
       if (editing && id) {
         await api.updateEvent(id, body);
@@ -121,12 +124,8 @@ export default function EventForm() {
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
         <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-2">
-          {editing ? "Refine" : "Compose"}
+          {editing ? "Edit" : "Create"}
         </div>
-        <h1 className="font-display text-5xl text-cream mb-8">
-          {editing ? "Refine the event" : "A new event"}
-        </h1>
-
         <form
           onSubmit={submit}
           className="relative bg-[#211d19] border border-[#332e28] rounded-xl p-8 card-glow space-y-6"
@@ -246,6 +245,25 @@ export default function EventForm() {
               placeholder="Optional · https://…"
             />
           </div>
+
+          <label className="flex items-start gap-3 rounded-lg border border-[#332e28] bg-[#141210] p-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(event) => setIsPublic(event.target.checked)}
+              className="mt-1 accent-[#c9a962]"
+            />
+            <span>
+              <span className="flex items-center gap-2 text-sm text-cream">
+                Public event
+              </span>
+              <span className="block text-xs text-[#8a8178] mt-1">
+                {isPublic
+                  ? "Anyone can discover this event and request to attend. Requests still require your approval."
+                  : "Hidden from public discovery. You can still invite guests with private invitation links."}
+              </span>
+            </span>
+          </label>
 
           {err && (
             <div className="text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded px-3 py-2">

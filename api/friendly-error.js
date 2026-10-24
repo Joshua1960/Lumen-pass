@@ -13,7 +13,7 @@ export function friendlyError(err, fallback = 'We could not complete that reques
     return 'You do not have permission to do that.';
   }
   if (normalized.includes('column') && normalized.includes('does not exist')) {
-    return 'The event data is not fully set up yet. Please contact support or run the database setup again.';
+    return 'A database migration is missing. Apply the migrations to the Supabase project used by this app with `npx supabase db push --linked`, then reload this page.';
   }
   if (normalized.includes('relation') && normalized.includes('does not exist')) {
     return 'The database tables are not fully set up yet. Please contact support or run the database setup again.';

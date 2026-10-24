@@ -1,42 +1,58 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import EventForm from './pages/EventForm';
-import EventDetail from './pages/EventDetail';
-import Scanner from './pages/Scanner';
-import Attendance from './pages/Attendance';
-import Invite from './pages/Invite';
-import MyInvitations from './pages/MyInvitations';
-import MyTickets from './pages/MyTickets';
-import Profile from './pages/Profile';
-import Admin from './pages/Admin';
+
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const EventForm = lazy(() => import('./pages/EventForm'));
+const EventDetail = lazy(() => import('./pages/EventDetail'));
+const Scanner = lazy(() => import('./pages/Scanner'));
+const Attendance = lazy(() => import('./pages/Attendance'));
+const Invite = lazy(() => import('./pages/Invite'));
+const MyInvitations = lazy(() => import('./pages/MyInvitations'));
+const MyTickets = lazy(() => import('./pages/MyTickets'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Admin = lazy(() => import('./pages/Admin'));
+const PublicEvents = lazy(() => import('./pages/PublicEvents'));
+const PublicEvent = lazy(() => import('./pages/PublicEvent'));
+const GuestPass = lazy(() => import('./pages/GuestPass'));
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/invite/:token" element={<Invite />} />
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0c0b0a]">
+              <div className="gold-ring" />
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/events" element={<PublicEvents />} />
+            <Route path="/events/:id/request" element={<PublicEvent />} />
+            <Route path="/guest-pass/:token" element={<GuestPass />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/invite/:token" element={<Invite />} />
 
-          <Route path="/dashboard" element={<ProtectedRoute roles={['host']}><Dashboard /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute roles={['host']}><Admin /></ProtectedRoute>} />
-          <Route path="/events/new" element={<ProtectedRoute roles={['host']}><EventForm /></ProtectedRoute>} />
-          <Route path="/events/:id/edit" element={<ProtectedRoute roles={['host']}><EventForm /></ProtectedRoute>} />
-          <Route path="/events/:id" element={<ProtectedRoute roles={['host']}><EventDetail /></ProtectedRoute>} />
-          <Route path="/events/:id/scan" element={<ProtectedRoute roles={['host']}><Scanner /></ProtectedRoute>} />
-          <Route path="/events/:id/attendance" element={<ProtectedRoute roles={['host']}><Attendance /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute roles={['host']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute roles={['host']}><Admin /></ProtectedRoute>} />
+            <Route path="/events/new" element={<ProtectedRoute roles={['host']}><EventForm /></ProtectedRoute>} />
+            <Route path="/events/:id/edit" element={<ProtectedRoute roles={['host']}><EventForm /></ProtectedRoute>} />
+            <Route path="/events/:id" element={<ProtectedRoute roles={['host']}><EventDetail /></ProtectedRoute>} />
+            <Route path="/events/:id/scan" element={<ProtectedRoute roles={['host']}><Scanner /></ProtectedRoute>} />
+            <Route path="/events/:id/attendance" element={<ProtectedRoute roles={['host']}><Attendance /></ProtectedRoute>} />
 
-          <Route path="/my-invitations" element={<ProtectedRoute roles={['attendee']}><MyInvitations /></ProtectedRoute>} />
-          <Route path="/my-tickets" element={<ProtectedRoute roles={['attendee']}><MyTickets /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute roles={['host','attendee']}><Profile /></ProtectedRoute>} />
+            <Route path="/my-invitations" element={<ProtectedRoute roles={['attendee']}><MyInvitations /></ProtectedRoute>} />
+            <Route path="/my-tickets" element={<ProtectedRoute roles={['attendee']}><MyTickets /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute roles={['host','attendee']}><Profile /></ProtectedRoute>} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
