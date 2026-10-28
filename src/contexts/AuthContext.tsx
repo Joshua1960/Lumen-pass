@@ -74,18 +74,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(async ({ data }) => {
+    void supabase.auth
+      .getSession()
+      .then(async ({ data, error }) => {
+        if (!mounted) return;
+        if (error) throw error;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        await loadProfile(data.session?.user ?? null);
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        setProfileError(
+          error instanceof Error ? error.message : "Unable to load your session",
+        );
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_ev, sess) => {
       if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      await loadProfile(data.session?.user ?? null);
-      setLoading(false);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_ev, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      await loadProfile(sess?.user ?? null);
-      setLoading(false);
+
+      // Supabase auth callbacks run while its auth lock is held. Defer profile
+      // loading because loadProfile reads the session from the auth client.
+      window.setTimeout(() => {
+        if (!mounted) return;
+        void loadProfile(sess?.user ?? null).finally(() => {
+          if (mounted) setLoading(false);
+        });
+      }, 0);
     });
     return () => {
       mounted = false;

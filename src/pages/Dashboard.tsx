@@ -98,7 +98,7 @@ export default function Dashboard() {
             to="/events/new"
             className="btn-gold px-6 py-3 rounded text-sm inline-flex items-center gap-2"
           >
-            New event
+            Create a New event
           </Link>
         </div>
 
