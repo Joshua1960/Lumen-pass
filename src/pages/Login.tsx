@@ -85,7 +85,7 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="hairline w-16 mx-auto mb-6" />
             <h1 className="font-display text-4xl text-cream mb-2">
-              {mode === "signin" ? "Welcome back" : "A quiet welcome"}
+              {mode === "signin" ? "Welcome back" : "Create an account"}
             </h1>
           </div>
 
