@@ -76,7 +76,7 @@ export default function Login() {
           <span className="font-display text-xl text-cream">Lumen</span>
         </Link>
         <div className="text-xs uppercase tracking-[0.2em] text-[#8a8178]">
-          The Door
+          LUMEN BY GCI
         </div>
       </header>
 
