@@ -95,36 +95,6 @@ export default function Login() {
             <div className="corner-bl" />
             <div className="corner-br" />
 
-            {mode === "signup" && (
-              <div className="mb-6">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-[#c9a962] mb-3">
-                  Your role
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole("host")}
-                    className={`p-3 rounded border text-left transition-all ${role === "host" ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/40"}`}
-                  >
-                    <div className="text-sm text-cream">Host</div>
-                    <div className="text-[11px] text-[#8a8178] mt-0.5">
-                      Compose events
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole("attendee")}
-                    className={`p-3 rounded border text-left transition-all ${role === "attendee" ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#332e28] hover:border-[#c9a962]/40"}`}
-                  >
-                    <div className="text-sm text-cream">Guest</div>
-                    <div className="text-[11px] text-[#8a8178] mt-0.5">
-                      Attend Event
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-
             <form onSubmit={submit} className="space-y-4">
               {mode === "signup" && (
                 <div>
