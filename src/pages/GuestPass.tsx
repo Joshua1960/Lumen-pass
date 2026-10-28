@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Copy, Check, Download } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import Navbar from "../components/Navbar";
 import QRDisplay from "../components/QRDisplay";
 import StatusBadge from "../components/StatusBadge";
@@ -35,7 +35,9 @@ export default function GuestPass() {
     try {
       setData(await api.publicGuestPass(token));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load this pass.");
+      setError(
+        cause instanceof Error ? cause.message : "Unable to load this pass.",
+      );
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,10 @@ export default function GuestPass() {
         })
         .catch((cause: unknown) => {
           console.error("Guest pass QR generation failed", cause);
-          if (active) setPdfError("Could not prepare the QR image. Reload this page and try again.");
+          if (active)
+            setPdfError(
+              "Could not prepare the QR image. Reload this page and try again.",
+            );
         });
     }
     return () => {
@@ -76,7 +81,9 @@ export default function GuestPass() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      setError("Unable to copy the pass link. You can still bookmark this page.");
+      setError(
+        "Unable to copy the pass link. You can still bookmark this page.",
+      );
     }
   };
 
@@ -144,7 +151,7 @@ export default function GuestPass() {
           to="/events"
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-8"
         >
-          <ArrowLeft className="w-3 h-3" /> Browse events
+          Browse events
         </Link>
         {loading ? (
           <div className="flex justify-center py-24">
@@ -168,13 +175,10 @@ export default function GuestPass() {
             </h1>
             <div className="flex flex-col items-center gap-2 text-sm text-[#8a8178] mb-6">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#c9a962]" />
-                {formatDate(data.event.starts_at)} · {formatTime(data.event.starts_at)}
+                {formatDate(data.event.starts_at)} ·{" "}
+                {formatTime(data.event.starts_at)}
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#c9a962]" />
-                {data.event.venue}
-              </div>
+              <div className="flex items-center gap-2">{data.event.venue}</div>
             </div>
             <div className="mb-6">
               <StatusBadge status={data.invitation.status} />
@@ -204,7 +208,6 @@ export default function GuestPass() {
                   disabled={!qrImage}
                   className="btn-gold px-5 py-2.5 rounded text-sm inline-flex items-center gap-2 mt-5 disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4" />
                   {qrImage ? "Download pass PDF" : "Preparing pass…"}
                 </button>
               </>
@@ -227,7 +230,11 @@ export default function GuestPass() {
                 onClick={copyLink}
                 className="btn-ghost px-4 py-2 rounded text-sm inline-flex items-center gap-2"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
                 {copied ? "Copied" : "Copy private link"}
               </button>
               {!data.ticket && (

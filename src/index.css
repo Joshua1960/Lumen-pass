@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
   --color-ink: #0c0b0a;
   --color-ink-2: #141210;
   --color-surface: #1a1714;
@@ -17,14 +17,16 @@
   --color-amber: #d4a054;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   min-height: 100%;
 }
 
 body {
   background: #0c0b0a;
   color: #f3ebe0;
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: "Outfit", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -34,7 +36,7 @@ body {
 }
 
 .font-display {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   letter-spacing: -0.01em;
 }
 
@@ -47,7 +49,11 @@ body {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .hairline {
   background: linear-gradient(90deg, transparent, #c9a962, transparent);
@@ -55,10 +61,14 @@ body {
 }
 
 .card-glow {
-  box-shadow: 0 0 0 1px rgba(201, 169, 98, 0.12), 0 24px 60px -24px rgba(0,0,0,0.7);
+  box-shadow:
+    0 0 0 1px rgba(201, 169, 98, 0.12),
+    0 24px 60px -24px rgba(0, 0, 0, 0.7);
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -76,19 +86,31 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .btn-gold {
   background: #c9a962;
   color: #0c0b0a;
-  transition: filter 0.2s ease, transform 0.2s ease;
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease;
   font-weight: 500;
 }
-.btn-gold:hover:not(:disabled) { filter: brightness(1.08); }
-.btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-gold:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .btn-ghost {
   border: 1px solid #332e28;
   color: #f3ebe0;
   background: transparent;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
-.btn-ghost:hover:not(:disabled) { border-color: #c9a962; background: rgba(201,169,98,0.05); }
+.btn-ghost:hover:not(:disabled) {
+  border-color: #c9a962;
+  background: rgba(201, 169, 98, 0.05);
+}
 
 .field {
   background: #141210;
@@ -100,19 +122,46 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   transition: border-color 0.2s;
   width: 100%;
 }
-.field:focus { border-color: #c9a962; }
-.field::placeholder { color: #6b6259; }
+.field:focus {
+  border-color: #c9a962;
+}
+.field::placeholder {
+  color: #6b6259;
+}
 
-.corner-tl, .corner-tr, .corner-bl, .corner-br {
+.corner-tl,
+.corner-tr,
+.corner-bl,
+.corner-br {
   position: absolute;
   width: 14px;
   height: 14px;
   border-color: #c9a962;
 }
-.corner-tl { top: 8px; left: 8px; border-top: 1px solid; border-left: 1px solid; }
-.corner-tr { top: 8px; right: 8px; border-top: 1px solid; border-right: 1px solid; }
-.corner-bl { bottom: 8px; left: 8px; border-bottom: 1px solid; border-left: 1px solid; }
-.corner-br { bottom: 8px; right: 8px; border-bottom: 1px solid; border-right: 1px solid; }
+.corner-tl {
+  top: 8px;
+  left: 8px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.corner-tr {
+  top: 8px;
+  right: 8px;
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+.corner-bl {
+  bottom: 8px;
+  left: 8px;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+.corner-br {
+  bottom: 8px;
+  right: 8px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
 
 .qr-frame {
   background: #f3ebe0;
@@ -122,10 +171,18 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-in { animation: fade-in-up 0.4s ease-out both; }
+.animate-in {
+  animation: fade-in-up 0.4s ease-out both;
+}
 
 #qr-reader video {
   border-radius: 8px;
@@ -137,7 +194,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   border: 1px solid #332e28 !important;
   padding: 8px 12px !important;
   border-radius: 6px !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: "Outfit", sans-serif !important;
   font-size: 13px !important;
   margin: 4px !important;
 }
@@ -149,5 +206,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   border-radius: 4px !important;
   margin: 4px 0 !important;
 }
-#qr-reader__scan_region img { display: none; }
-#qr-reader { border: none !important; }
+#qr-reader__scan_region img {
+  display: none;
+}
+#qr-reader {
+  border: none !important;
+}

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { api } from "../lib/api";
-import { ArrowLeft, Trash2 } from "lucide-react";
 
 export default function EventForm() {
   const { id } = useParams();
@@ -121,7 +120,7 @@ export default function EventForm() {
           to={editing && id ? `/events/${id}` : "/dashboard"}
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#8a8178] hover:text-[#c9a962] mb-6"
         >
-          <ArrowLeft className="w-3 h-3" /> Back
+          Back
         </Link>
         <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-2">
           {editing ? "Edit" : "Create"}
@@ -279,7 +278,7 @@ export default function EventForm() {
                 disabled={busy}
                 className="text-xs text-[#c47865] hover:text-[#c47865] flex items-center gap-2 px-3 py-2"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Delete event
+                Delete event
               </button>
             ) : (
               <span />

@@ -170,7 +170,7 @@ export default function QRScanner({
       <div className="relative w-full mx-auto max-w-md">
         <div
           id="qr-reader"
-          className="w-full rounded-lg overflow-hidden bg-black min-h-[280px]"
+          className="w-full rounded-lg overflow-hidden bg-black min-h-70"
         />
         {!ready && !error && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -180,7 +180,7 @@ export default function QRScanner({
       </div>
 
       {error && (
-        <div className="mt-4 flex items-start gap-3 text-sm text-[#c47865] bg-[#c47865]/10 border border-[#c47865]/30 rounded p-3">
+        <div className="mt-4 flex items-start gap-3 text-sm text-rose bg-[#c47865]/10 border border-[#c47865]/30 rounded p-3">
           <div className="flex-1">
             <div>{error}</div>
             <button

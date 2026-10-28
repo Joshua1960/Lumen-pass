@@ -4,7 +4,6 @@ import Navbar from "../components/Navbar";
 import TicketCard from "../components/TicketCard";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
-import { Mail } from "lucide-react";
 
 export default function MyTickets() {
   const { profile, user } = useAuth();
@@ -67,7 +66,7 @@ export default function MyTickets() {
               to="/my-invitations"
               className="btn-gold px-6 py-3 rounded text-sm inline-flex items-center gap-2"
             >
-              <Mail className="w-4 h-4" /> See invitations
+              See invitations
             </Link>
           </div>
         )}

@@ -25,7 +25,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense
           fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#0c0b0a]">
+            <div className="min-h-screen flex items-center justify-center bg-ink">
               <div className="gold-ring" />
             </div>
           }

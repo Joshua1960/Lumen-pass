@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { api } from "../lib/api";
 import { formatDate, formatTime } from "../lib/format";
@@ -18,7 +17,9 @@ export default function PublicEvents() {
       .listPublicEvents()
       .then(setEvents)
       .catch((cause: unknown) =>
-        setError(cause instanceof Error ? cause.message : "Unable to load events."),
+        setError(
+          cause instanceof Error ? cause.message : "Unable to load events.",
+        ),
       )
       .finally(() => setLoading(false));
   }, []);
@@ -33,7 +34,8 @@ export default function PublicEvents() {
           </div>
           <h1 className="font-display text-5xl text-cream">Events</h1>
           <p className="text-[#8a8178] mt-3">
-            Request a place with your name and email. No attendee account needed.
+            Request a place with your name and email. No attendee account
+            needed.
           </p>
         </div>
 
@@ -74,13 +76,10 @@ export default function PublicEvents() {
                 </h2>
                 <div className="space-y-2 text-sm text-[#8a8178]">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#c9a962]" />
-                    {formatDate(event.starts_at)} · {formatTime(event.starts_at)}
+                    {formatDate(event.starts_at)} ·{" "}
+                    {formatTime(event.starts_at)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#c9a962]" />
-                    {event.venue}
-                  </div>
+                  <div className="flex items-center gap-2">{event.venue}</div>
                   <div>
                     {event.remaining_capacity > 0
                       ? `${event.remaining_capacity} places available`
@@ -96,7 +95,7 @@ export default function PublicEvents() {
                   to={`/events/${event.id}/request`}
                   className="btn-gold px-5 py-2.5 rounded text-sm inline-flex items-center gap-2 mt-6"
                 >
-                  Request to attend <ArrowRight className="w-4 h-4" />
+                  Request to attend
                 </Link>
               </div>
             </article>

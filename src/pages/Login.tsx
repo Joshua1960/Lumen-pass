@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { MailCheck } from "lucide-react";
 import type { Role } from "../lib/types";
 import myLogo from "../assets/gci-logo.png";
 
@@ -220,9 +219,6 @@ export default function Login() {
             <div className="corner-tr" />
             <div className="corner-bl" />
             <div className="corner-br" />
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#c9a962]/40 bg-[#c9a962]/10">
-              <MailCheck className="h-6 w-6 text-[#c9a962]" />
-            </div>
             <h2
               id="confirmation-title"
               className="mb-3 font-display text-3xl text-cream"

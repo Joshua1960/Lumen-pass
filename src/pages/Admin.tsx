@@ -4,14 +4,7 @@ import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
 import { api } from "../lib/api";
 import { formatDate, formatTime, relativeTime } from "../lib/format";
-import {
-  Calendar,
-  Users,
-  ScanLine,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-} from "lucide-react";
+import { Calendar, Users, ScanLine, ShieldCheck } from "lucide-react";
 
 interface AdminData {
   totals: {

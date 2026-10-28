@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { QrCode, ScanLine, Send, DoorOpen } from "lucide-react";
+import { QrCode, ScanLine, Send } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import myLogo from "../assets/gci-logo.png";
 
@@ -130,7 +130,6 @@ export default function Landing() {
           </div>
 
           <div className="relative bg-gradient-to-br from-[#211d19] to-[#141210] border border-[#332e28] rounded-xl p-10">
-            <DoorOpen className="w-7 h-7 text-[#c9a962] mb-6" />
             <div className="text-[11px] uppercase tracking-[0.3em] text-[#c9a962] mb-3">
               For guests
             </div>
