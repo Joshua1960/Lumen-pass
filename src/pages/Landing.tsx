@@ -38,7 +38,7 @@ export default function Landing() {
           }}
         />
         <div className=" mx-auto px-6 pt-20 pb-32 relative">
-          <div className="text-center max-w-3xl mx-auto">
+          <div className="text-center max-w-5xl mx-auto">
             <h1 className="font-display text-6xl md:text-8xl leading-[0.95] gold-gradient-text mb-6">
               Manage your event attendance. Discover upcoming events.
             </h1>
